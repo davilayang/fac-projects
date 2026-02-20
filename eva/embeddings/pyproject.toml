@@ -1,0 +1,16 @@
+[project]
+name = "vectorise-video-transcript"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "jupyterlab>=4.5.3",
+    "openai>=2.20.0",
+    "openai-whisper>=20250625",
+    "pinecone>=8.0.1",
+    "pyannote-audio>=4.0.4",
+    "python-dotenv>=1.2.1",
+    "torch>=2.10.0",
+]
+
