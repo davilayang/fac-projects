@@ -1,13 +1,10 @@
-import { Button, Card } from "@libs/components";
-import { GitHubIcon } from "@libs/components/icons";
-import "./App.css";
+import { Button, Card } from "@eva-elements";
+import { GitHubIcon } from "@eva-icons";
+import "./Home.css";
 
-function App() {
+export function Home() {
   return (
-    <main className="page">
-      <div className="page__bg" aria-hidden="true" />
-      <div className="page__grid" aria-hidden="true" />
-
+    <main className="page-home">
       <Card>
         <div className="page-login__logo-wrap" aria-hidden="true">
           <img
@@ -34,5 +31,3 @@ function App() {
     </main>
   );
 }
-
-export default App;

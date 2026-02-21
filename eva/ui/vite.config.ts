@@ -7,7 +7,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@libs': resolve(__dirname, 'src/libs'),
+      '@eva-elements': resolve(__dirname, 'src/components/elements'),
+      '@eva-icons':    resolve(__dirname, 'src/components/icons'),
     },
   },
 })

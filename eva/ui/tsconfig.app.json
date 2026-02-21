@@ -19,7 +19,8 @@
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@libs/*": ["src/libs/*"]
+      "@eva-elements": ["src/components/elements"],
+      "@eva-icons": ["src/components/icons"],
     },
 
     /* Linting */
@@ -28,7 +29,7 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
   },
-  "include": ["src"]
+  "include": ["src"],
 }
