@@ -30,7 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
 
-  // Check for an existing session on mount
+  // On mount, verify the httpOnly JWT cookie and hydrate user state.
+  // This is one request per page load — the server just runs jwt.verify(), no I/O.
   useEffect(() => {
     fetch("/auth/session", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
@@ -41,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => setStatus("unauthenticated"));
   }, []);
 
-  // Redirect to the auth server — it handles the GitHub OAuth dance
   const signIn = useCallback(() => {
     window.location.href = "/auth/github/login";
   }, []);

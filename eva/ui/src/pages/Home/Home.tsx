@@ -1,10 +1,13 @@
+import { Navigate } from "react-router";
 import { Button, Card } from "@eva-elements";
 import { GitHubIcon } from "@eva-icons";
 import { useAuth } from "../../auth/AuthContext";
 import "./Home.css";
 
 export function Home() {
-  const { signIn } = useAuth();
+  const { signIn, status } = useAuth();
+
+  if (status === "authenticated") return <Navigate to="/events" replace />;
 
   return (
     <main className="page-home">

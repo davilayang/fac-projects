@@ -4,7 +4,7 @@ import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 
 import "./index.css";
-import { Home, Event, EventGallery } from "./pages";
+import { Home, Event, EventGallery, Unauthorised, NotFound } from "./pages";
 import { PageLayout } from "./components/layout/PageLayout";
 import { AppLayout } from "./components/layout/AppLayout";
 import { AuthProvider } from "./auth/AuthContext";
@@ -18,6 +18,10 @@ const router = createBrowserRouter([
         Component: Home,
       },
       {
+        path: "unauthorised",
+        Component: Unauthorised,
+      },
+      {
         Component: AppLayout,
         children: [
           {
@@ -29,6 +33,10 @@ const router = createBrowserRouter([
             Component: Event,
           },
         ],
+      },
+      {
+        path: "*",
+        Component: NotFound,
       },
     ],
   },
