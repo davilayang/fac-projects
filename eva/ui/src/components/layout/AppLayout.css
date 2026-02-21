@@ -1,0 +1,23 @@
+/* ── App page layout ──────────────────────────────────────────────────── */
+
+.app-layout {
+  min-height: calc(100svh - 56px); /* 56px = nav height */
+}
+
+.app-layout__content {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding: 2.5rem 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .app-layout__content {
+    padding: 3rem 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-layout__content {
+    padding: 3.5rem 3rem;
+  }
+}

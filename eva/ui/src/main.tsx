@@ -6,6 +6,7 @@ import { RouterProvider } from "react-router/dom";
 import "./index.css";
 import { Home, Event, EventGallery } from "./pages";
 import { PageLayout } from "./components/layout/PageLayout";
+import { AppLayout } from "./components/layout/AppLayout";
 
 const router = createBrowserRouter([
   {
@@ -16,12 +17,17 @@ const router = createBrowserRouter([
         Component: Home,
       },
       {
-        path: "events",
-        Component: EventGallery,
-      },
-      {
-        path: "events/:id",
-        Component: Event,
+        Component: AppLayout,
+        children: [
+          {
+            path: "events",
+            Component: EventGallery,
+          },
+          {
+            path: "events/:id",
+            Component: Event,
+          },
+        ],
       },
     ],
   },
