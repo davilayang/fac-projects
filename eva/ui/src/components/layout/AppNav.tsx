@@ -1,10 +1,13 @@
 import { Link } from "react-router";
+import { useAuth } from "../../auth/AuthContext";
 import "./AppNav.css";
 
 export function AppNav() {
+  const { user, signOut } = useAuth();
+
   return (
     <nav className="nav">
-      <Link to="/" className="nav__brand">
+      <Link to="/events" className="nav__brand">
         <img
           className="nav__logo"
           src="/web-app-manifest-192x192.png"
@@ -14,6 +17,22 @@ export function AppNav() {
         />
         <span className="nav__wordmark">EVA</span>
       </Link>
+
+      <div className="nav__user">
+        {user?.avatarUrl && (
+          <img
+            className="nav__avatar"
+            src={user.avatarUrl}
+            alt={user.name ?? user.login}
+            width="32"
+            height="32"
+          />
+        )}
+        <span className="nav__name">{user?.name ?? user?.login}</span>
+        <button className="nav__logout" type="button" onClick={signOut}>
+          Sign out
+        </button>
+      </div>
     </nav>
   );
 }
