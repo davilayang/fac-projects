@@ -50,7 +50,7 @@ router.get(
   },
 );
 
-// Returns the authenticated user decoded from the JWT cookie — no DB or file I/O
+// Returns the authenticated user decoded from the JWT cookie
 router.get("/auth/session", (req: Request, res: Response) => {
   const token = req.cookies?.[COOKIE_NAME];
   if (!token) {
