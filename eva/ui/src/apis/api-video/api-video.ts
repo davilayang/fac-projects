@@ -35,24 +35,26 @@ export interface ApiVideoListResponse {
 const APIVIDEO_API_KEY = import.meta.env.VITE_APIVIDEO_API_KEY as string | undefined;
 export const PAGE_SIZE = 12;
 
-function buildListUrl(currentPage: number, pageSize: number): URL {
+function buildListUrl(currentPage: number, pageSize: number, title?: string): URL {
   const url = new URL("/videos", "https://ws.api.video");
   url.searchParams.set("currentPage", String(currentPage));
   url.searchParams.set("pageSize", String(pageSize));
   url.searchParams.set("sortBy", "publishedAt");
   url.searchParams.set("sortOrder", "desc");
+  if (title) url.searchParams.set("title", title);
   return url;
 }
 
 export async function listPage(
   currentPage: number,
   pageSize: number = PAGE_SIZE,
+  title?: string,
 ): Promise<ApiVideoListResponse> {
   if (!APIVIDEO_API_KEY) {
     throw new Error("VITE_APIVIDEO_API_KEY is not configured");
   }
 
-  const response = await fetch(buildListUrl(currentPage, pageSize), {
+  const response = await fetch(buildListUrl(currentPage, pageSize, title), {
     headers: {
       Authorization: `Bearer ${APIVIDEO_API_KEY}`,
       Accept: "application/json",

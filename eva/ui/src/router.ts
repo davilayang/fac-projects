@@ -20,7 +20,8 @@ export type EventGalleryLoaderData = ApiVideoListResponse;
 async function eventsLoader({ request }: LoaderFunctionArgs): Promise<EventGalleryLoaderData> {
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get("page") ?? 1));
-  return apiVideo.listPage(page);
+  const q = url.searchParams.get("q")?.trim() || undefined;
+  return apiVideo.listPage(page, undefined, q);
 }
 
 export const router = createBrowserRouter([
