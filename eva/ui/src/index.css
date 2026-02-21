@@ -1,0 +1,102 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* ── EVA Brand Colours (extracted from logo) ─────────────────────── */
+
+  /* Backgrounds */
+  --color-bg-deep:        #08091a;   /* outermost dark navy */
+  --color-bg-base:        #0d1033;   /* base midnight blue */
+  --color-bg-inner:       #1a1f5e;   /* inner circle / indigo fill */
+
+  /* Primary accent — cyan-blue neon (circle rim, glow) */
+  --color-accent-cyan:    #4dc8e8;
+  --color-accent-cyan-muted: #5bb8d4;
+
+  /* Secondary accent — lavender / geometric frame lines */
+  --color-accent-lavender: #8899cc;
+
+  /* Microphone — steel blue tones */
+  --color-mic-body:       #6a8ab5;
+  --color-mic-highlight:  #c5d5e8;
+
+  /* Book pages */
+  --color-book-peach:     #f0a080;   /* warm page edge */
+  --color-book-purple:    #8080d0;   /* cool page face */
+  --color-book-pink:      #d080b0;   /* mid page */
+
+  /* Sparkles / stars */
+  --color-sparkle:        #e8a030;   /* amber gold */
+
+  /* Glow / bottom accent */
+  --color-glow-rose:      #c87060;   /* rose-gold base glow */
+
+  /* Semantic aliases */
+  --color-primary:        var(--color-accent-cyan);
+  --color-primary-muted:  var(--color-accent-cyan-muted);
+  --color-secondary:      var(--color-accent-lavender);
+  --color-highlight:      var(--color-sparkle);
+  --color-surface:        var(--color-bg-inner);
+  --color-bg:             var(--color-bg-base);
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
