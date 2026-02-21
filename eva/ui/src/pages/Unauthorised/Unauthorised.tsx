@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Card } from "@eva-elements";
+import { ROUTES } from "../../router";
 import "./Unauthorised.css";
 
 export function Unauthorised() {
@@ -31,7 +32,7 @@ export function Unauthorised() {
 
         <hr className="page-login__divider" />
 
-        <Link to="/events" className="page-unauth__back">
+        <Link to={ROUTES.HOME} className="page-unauth__back">
           Back to sign in
         </Link>
       </Card>

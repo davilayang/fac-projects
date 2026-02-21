@@ -1,39 +1,15 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  type ReactNode,
-} from "react";
-
-export interface AuthUser {
-  id: string;
-  login: string;
-  name: string | null;
-  email: string | null;
-  avatarUrl: string | null;
-}
-
-type AuthStatus = "loading" | "authenticated" | "unauthenticated";
-
-interface AuthContextValue {
-  user: AuthUser | null;
-  status: AuthStatus;
-  signIn: () => void;
-  signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import { useState, useEffect, useCallback, type ReactNode } from "react";
+import { AuthContext, type AuthUser } from "./authTypes";
+import { AUTH_API } from "./authApi";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [status, setStatus] = useState<AuthStatus>("loading");
+  const [status, setStatus] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
 
   // On mount, verify the httpOnly JWT cookie and hydrate user state.
   // This is one request per page load — the server just runs jwt.verify(), no I/O.
   useEffect(() => {
-    fetch("/auth/session", { credentials: "include" })
+    fetch(AUTH_API.SESSION, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { user: AuthUser } | null) => {
         setUser(data?.user ?? null);
@@ -43,11 +19,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback(() => {
-    window.location.href = "/auth/github/login";
+    window.location.href = AUTH_API.LOGIN;
   }, []);
 
   const signOut = useCallback(async () => {
-    await fetch("/auth/logout", { method: "POST", credentials: "include" });
+    await fetch(AUTH_API.LOGOUT, { method: "POST", credentials: "include" });
     setUser(null);
     setStatus("unauthenticated");
   }, []);
@@ -57,10 +33,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext>
   );
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
 }

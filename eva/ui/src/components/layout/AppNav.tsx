@@ -1,5 +1,6 @@
 import { Link } from "react-router";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/useAuth";
+import { ROUTES } from "../../router";
 import "./AppNav.css";
 
 export function AppNav() {
@@ -7,7 +8,7 @@ export function AppNav() {
 
   return (
     <nav className="nav">
-      <Link to="/events" className="nav__brand">
+      <Link to={ROUTES.EVENTS} className="nav__brand">
         <img
           className="nav__logo"
           src="/web-app-manifest-192x192.png"

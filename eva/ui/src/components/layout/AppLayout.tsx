@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/useAuth";
+import { ROUTES } from "../../router";
 import { AppNav } from "./AppNav";
 import "./AppLayout.css";
 
@@ -9,7 +10,7 @@ export function AppLayout() {
   if (status === "loading") return null;
 
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ROUTES.HOME} replace />;
   }
 
   return (

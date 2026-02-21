@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Card } from "@eva-elements";
+import { ROUTES } from "../../router";
 import "./NotFound.css";
 
 export function NotFound() {
@@ -32,7 +33,7 @@ export function NotFound() {
 
         <hr className="page-notfound__divider" />
 
-        <Link to="/" className="page-notfound__back">
+        <Link to={ROUTES.EVENTS} className="page-notfound__back">
           Back to events
         </Link>
       </Card>
