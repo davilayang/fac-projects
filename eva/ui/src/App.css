@@ -1,4 +1,5 @@
-/* ── Page shell ──────────────────────────────────────────────────────── */
+/* ── Page shell ───────────────────────────────────────────────────────── */
+
 .page {
   position: relative;
   display: flex;
@@ -7,25 +8,83 @@
   justify-content: center;
   overflow: hidden;
   background-color: var(--color-bg-deep);
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
+/* Gradient atmosphere */
 .page__bg {
   pointer-events: none;
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 15% 2%,  rgba(77, 200, 232, 0.45), transparent 42%),
-    radial-gradient(circle at 85% 8%,  rgba(200, 112,  96, 0.35), transparent 40%),
-    linear-gradient(180deg, #131640 0%, #0a0c28 55%, var(--color-bg-deep) 100%);
+    radial-gradient(circle at 18% 4%,  var(--color-cyan-glow-40),     transparent 40%),
+    radial-gradient(circle at 82% 6%,  var(--color-rose-glow-28),     transparent 38%),
+    radial-gradient(circle at 50% 100%, var(--color-lavender-glow-15), transparent 55%),
+    linear-gradient(180deg, var(--color-bg-mid-a) 0%, var(--color-bg-mid-b) 55%, var(--color-bg-deep) 100%);
 }
 
-/* ── Login page typography (page-specific, not Card internals) ───────── */
+/* Subtle two-axis grid */
+.page__grid {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--color-white-03) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-white-03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+
+/* ── Logo ─────────────────────────────────────────────────────────────── */
+
+.page-login__logo-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 0.25rem;
+}
+
+.page-login__logo {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  animation: logo-pulse 4s ease-in-out infinite;
+}
+
+/* Diffuse glow bloom behind the logo */
+.page-login__logo-glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-cyan-glow-30) 0%, transparent 70%);
+  animation: glow-pulse 4s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { filter: drop-shadow(0 0 12px var(--color-cyan-glow-55)); }
+  50%       { filter: drop-shadow(0 0 24px var(--color-cyan-glow-85)); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1);    }
+  50%       { opacity: 1;   transform: scale(1.12); }
+}
+
+/* ── Login typography ─────────────────────────────────────────────────── */
+
 .page-login__title {
   margin: 0;
-  font-size: 2rem;
+  font-family: var(--font-display);
+  font-size: 3rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
+  line-height: 1;
   background: linear-gradient(135deg, var(--color-accent-cyan) 0%, var(--color-accent-lavender) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -33,15 +92,31 @@
 }
 
 .page-login__subtitle {
-  margin: 0;
-  font-size: 0.8rem;
-  letter-spacing: 0.18em;
+  margin: 0.35rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--color-accent-lavender);
+  color: var(--color-text-secondary);
 }
 
+/* ── Divider ──────────────────────────────────────────────────────────── */
+
+.page-login__divider {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--color-border-soft);
+  margin: 0.75rem 0 0.25rem;
+}
+
+/* ── Hint ─────────────────────────────────────────────────────────────── */
+
 .page-login__hint {
-  margin: 1rem 0 0.5rem;
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 0.25rem;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  letter-spacing: 0.01em;
 }

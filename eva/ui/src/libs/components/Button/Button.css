@@ -7,7 +7,7 @@
   border: 1px solid transparent;
   font-size: 0.875rem;
   font-weight: 500;
-  font-family: inherit;
+  font-family: var(--font-ui, inherit);
   cursor: pointer;
   transition:
     border-color 0.2s,
@@ -22,14 +22,14 @@
 
 /* Variant: ghost */
 .btn--ghost {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  border-color: var(--color-border-btn);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
 }
 
 .btn--ghost:hover {
   border-color: var(--color-accent-cyan);
-  background: rgba(77, 200, 232, 0.1);
+  background: var(--color-cyan-glow-10);
 }
 
 .btn--ghost:focus-visible {
