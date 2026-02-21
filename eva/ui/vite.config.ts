@@ -11,4 +11,12 @@ export default defineConfig({
       '@eva-icons':    resolve(__dirname, 'src/components/icons'),
     },
   },
+  server: {
+    proxy: {
+      '/auth': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+    },
+  },
 })

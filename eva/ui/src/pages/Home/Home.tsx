@@ -1,8 +1,11 @@
 import { Button, Card } from "@eva-elements";
 import { GitHubIcon } from "@eva-icons";
+import { useAuth } from "../../auth/AuthContext";
 import "./Home.css";
 
 export function Home() {
+  const { signIn } = useAuth();
+
   return (
     <main className="page-home">
       <Card>
@@ -24,7 +27,7 @@ export function Home() {
 
         <p className="page-login__hint">Sign in to continue</p>
 
-        <Button icon={<GitHubIcon size="small" />} type="button">
+        <Button icon={<GitHubIcon size="small" />} type="button" onClick={signIn}>
           Sign in with GitHub
         </Button>
       </Card>
