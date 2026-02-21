@@ -43,8 +43,4 @@ passport.use(
   )
 );
 
-// Serialize the whole user object into the session cookie — no DB needed
-passport.serializeUser((user, done) => done(null, user));
-passport.deserializeUser((user, done) => done(null, user as GitHubUser));
-
 export default passport;
