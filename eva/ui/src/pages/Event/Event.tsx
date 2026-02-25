@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { Link } from "react-router";
 
@@ -12,14 +12,21 @@ import { VoiceGuideTab, MomentsTab } from "./_components";
 
 import "./Event.css";
 
-const EVENT_TABS: TabItem[] = [
-  { id: "voice-guide", label: "Voice Guide", content: <VoiceGuideTab /> },
-  { id: "moments", label: "Moments", content: <MomentsTab /> },
-];
-
 export function Event() {
   const { id } = useParams<{ id: string }>();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const eventTabs = useMemo<TabItem[]>(
+    () => [
+      { id: "voice-guide", label: "Voice Guide", content: <VoiceGuideTab /> },
+      {
+        id: "moments",
+        label: "Moments",
+        content: <MomentsTab videoId={id ?? ""} />,
+      },
+    ],
+    [id]
+  );
 
   if (!id) {
     return <p>No video available</p>;
@@ -63,7 +70,7 @@ export function Event() {
           </button>
 
           <div className="event__sidebar-panel" aria-hidden={!sidebarOpen}>
-            <Tabs tabs={EVENT_TABS} />
+            <Tabs tabs={eventTabs} />
           </div>
         </div>
       </div>
