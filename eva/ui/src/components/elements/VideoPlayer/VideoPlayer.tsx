@@ -83,6 +83,38 @@ export function EventVideoPlayer({ id, controls }: EventVideoPlayerProps) {
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, [updateState]);
 
+  // ── Idle cursor / controls auto-hide in fullscreen ───────────────────────
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const IDLE_MS = 3000;
+
+    const setIdle = () => wrapper.setAttribute("data-idle", "true");
+    const resetIdle = () => {
+      wrapper.removeAttribute("data-idle");
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = setTimeout(setIdle, IDLE_MS);
+    };
+
+    wrapper.addEventListener("mousemove", resetIdle);
+    wrapper.addEventListener("mousedown", resetIdle);
+    wrapper.addEventListener("keydown", resetIdle);
+
+    // Start the timer immediately
+    idleTimerRef.current = setTimeout(setIdle, IDLE_MS);
+
+    return () => {
+      wrapper.removeEventListener("mousemove", resetIdle);
+      wrapper.removeEventListener("mousedown", resetIdle);
+      wrapper.removeEventListener("keydown", resetIdle);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      wrapper.removeAttribute("data-idle");
+    };
+  }, []);
+
   // ── Global imperative controller (called by agent RPC) ──────────────────
   const setCurrentTime = useCallback(
     (time: number) => playerRef.current?.setCurrentTime(Math.max(0, time)),

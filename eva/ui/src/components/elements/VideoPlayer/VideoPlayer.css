@@ -15,4 +15,18 @@
 
 .video-player__controls-bar {
   flex-shrink: 0;
+  transition:
+    opacity 0.3s ease,
+    translate 0.3s ease;
+}
+
+/* Hide controls bar and cursor after idle timeout — fullscreen only */
+.video-player:fullscreen[data-idle="true"] {
+  cursor: none;
+}
+
+.video-player:fullscreen[data-idle="true"] .video-player__controls-bar {
+  opacity: 0;
+  pointer-events: none;
+  translate: 0 0.5rem;
 }
