@@ -1,5 +1,7 @@
 import json
+import os
 
+from textwrap import dedent
 from dotenv import load_dotenv
 from livekit import agents, rtc
 from livekit.agents import (
@@ -7,10 +9,10 @@ from livekit.agents import (
     AgentServer,
     AgentSession,
     RunContext,
-    StopResponse,
     ToolError,
     function_tool,
     inference,
+    mcp,
     room_io,
 )
 from livekit.plugins import noise_cancellation, silero
@@ -22,19 +24,40 @@ load_dotenv(".env.local")
 class Assistant(Agent):
     def __init__(self) -> None:
         super().__init__(
-            instructions="""You are a helpful voice AI assistant for an interactive video page.
-            You eagerly assist users with their questions by providing information from your extensive knowledge.
-            Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.
-            You are curious, friendly, and have a sense of humor.
-            You can fully control the video through tools.
-            If the user asks to play, pause, jump to a timestamp, rewind, or skip forward/backward,
-            always use the corresponding video control tool instead of explaining what to click.
-            If the user asks to remember something, save a bookmark, or write a note,
-            use add_video_bookmark or add_video_note.
-            set_video_timestamp uses an absolute timestamp in seconds from the start.
-            seek_video_by uses a relative offset in seconds where positive is forward and negative is backward.
-            For jump and seek operations, do not speak after the tool succeeds. Let the user watch.""",
+            instructions=dedent("""\
+                You are a helpful voice AI assistant for an interactive video page.
+                You eagerly assist users with their questions by providing
+                information from your extensive knowledge.
+                Your responses are concise, to the point, and without any complex
+                formatting or punctuation including emojis, asterisks, or other symbols.
+
+                You are curious, friendly, and have a sense of humor.
+                You can fully control the video through tools.
+
+                If the user asks to play, pause, jump to a timestamp, rewind,
+                or skip forward/backward, always use the corresponding video
+                control tool instead of explaining what to click.
+
+                If the user asks to remember something, save a bookmark, or write a note, use add_video_bookmark or add_video_note.
+
+                set_video_timestamp uses an absolute timestamp in seconds from the start.
+
+
+                seek_video_by uses a relative offset in seconds where positive is forward and negative is backward.
+
+                For jump and seek operations, do not speak after the tool succeeds. Let the user watch. If the user asks what was said or covered in the video, use search-records to find relevant transcript segments before answering.
+
+        You have access to a Pinecone vector database via MCP tools.
+        Use the `search_records` tool to find relevant video transcript segments
+        when the user asks what was said or covered in the video.
+
+                use search-records to find relevant transcript segments before answering.
+
+            """),
+
+
         )
+
 
     async def _rpc(
         self, context: RunContext, method: str, payload: dict | None = None
@@ -117,6 +140,13 @@ async def my_agent(ctx: agents.JobContext):
         ),
         vad=silero.VAD.load(),
         turn_detection=MultilingualModel(),
+        mcp_servers=[
+            mcp.MCPServerStdio(
+                command="npx",
+                args=["-y", "@pinecone-database/mcp"],
+                env={**os.environ, "PINECONE_API_KEY": os.environ["PINECONE_API_TOKEN"]},
+            )
+        ],
     )
 
     await session.start(
@@ -133,6 +163,10 @@ async def my_agent(ctx: agents.JobContext):
             ),
         ),
     )
+    for tool in session.tools:
+        print(f"Tool available: {tool.name}")
+
+    # await session.generate_reply(...)
 
     await session.generate_reply(
         instructions="Greet the user and offer your assistance."
