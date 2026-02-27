@@ -2,38 +2,47 @@
 
 A LiveKit-powered voice AI assistant using STT → LLM → TTS
 
-## Testing Without the UI
+## Deveolopment Instructions  
 
-The agent runs as a LiveKit worker and waits for job dispatches. Because a cloud-deployed agent may also be registered under the same name, use a distinct agent name locally to avoid conflicts.
+The Voice Agent runs as a LiveKit worker and waits for job dispatches.
 
-### 1. Set a unique agent name for local testing
+### Start local agent 
 
-In `agent.py`, change the agent name:
-
-```python
-@server.rtc_session(agent_name="eva-dev")
-```
-
-### 2. Start the local agent
+In the "voice-agent" working directory, run: 
 
 ```bash
-uv run python agent.py dev
+uv run --env-file .env python agent.py dev
 ```
 
 Wait for the `registered worker` log line before proceeding.
 
-### 3. Dispatch the agent to a room
-
-To dispatch to a new auto-generated room:
+### Join a manual created session on Playground
 
 ```bash
-lk dispatch create --agent-name eva-dev --new-room
+AGENT_NAME=eva
+
+# Dispatch the agent to a new room
+PG_ROOM=$(
+  lk dispatch create --agent-name eva --new-room 2>&1 | grep -o 'room:"[^"]*"' | cut -d'"' -f2
+)
+echo $PG_ROOM
+
+# Get token to join the room
+lk token create --join \
+  --room $PG_ROOM \
+  --identity test-user \
+  --valid-for 10m
 ```
+
+- Visit Playground: https://agents-playground.livekit.io
+- On Manual Page, uses the output URL and token to join
+
+### 3. Dispatch the agent to a room
 
 To dispatch to an existing room (e.g. from the LiveKit Playground):
 
 ```bash
-lk dispatch create --agent-name eva-dev --room <room-name>
+lk dispatch create --agent-name eva --room <room-name>
 ```
 
 Your local agent terminal should show a `received job request` log confirming it picked up the dispatch.
@@ -47,7 +56,7 @@ lk token create \
   --join \
   --room <room-name> \
   --identity test-user \
-  --valid-for 1h
+  --valid-for 10m
 ```
 
 In the Playground, set the server URL to your `LIVEKIT_URL` and paste the token.
