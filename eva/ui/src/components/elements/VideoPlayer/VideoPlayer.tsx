@@ -1,7 +1,8 @@
 import ApiVideoPlayer, {
   type ApiVideoPlayerRef,
 } from "@api.video/react-player";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import "./VideoPlayer.css";
 
 interface EventVideoPlayerController {
   play: () => void;
@@ -25,9 +26,10 @@ declare global {
 
 interface EventVideoPlayerProps {
   id: string;
+  overlay?: ReactNode;
 }
 
-export function EventVideoPlayer({ id }: EventVideoPlayerProps) {
+export function EventVideoPlayer({ id, overlay }: EventVideoPlayerProps) {
   const playerRef = useRef<ApiVideoPlayerRef>(null);
   const currentTimeRef = useRef(0);
   const isPlayingRef = useRef(false);
@@ -69,7 +71,7 @@ export function EventVideoPlayer({ id }: EventVideoPlayerProps) {
   }, [id, seekBy, setCurrentTime]);
 
   return (
-    <section id="video-player-section">
+    <section id="video-player-section" className="video-player-section">
       <ApiVideoPlayer
         ref={playerRef}
         video={{ id }}
@@ -94,6 +96,9 @@ export function EventVideoPlayer({ id }: EventVideoPlayerProps) {
           durationRef.current = d;
         }}
       />
+      {overlay && (
+        <div className="video-player-section__overlay">{overlay}</div>
+      )}
     </section>
   );
 }

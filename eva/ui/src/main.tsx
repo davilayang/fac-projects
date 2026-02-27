@@ -4,7 +4,7 @@ import { RouterProvider } from "react-router/dom";
 
 import "hls-video-element";
 
-import { AuthProvider, AgentSessionProvider } from "@eva-providers";
+import { AuthProvider } from "@eva-providers";
 import { router } from "@eva-router";
 
 import "./index.css";
@@ -12,9 +12,7 @@ import "./index.css";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AuthProvider>
-      <AgentSessionProvider>
-        <RouterProvider router={router} />
-      </AgentSessionProvider>
+      <RouterProvider router={router} />
     </AuthProvider>
   </StrictMode>,
 );
