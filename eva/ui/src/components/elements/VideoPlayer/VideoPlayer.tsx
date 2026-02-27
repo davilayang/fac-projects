@@ -156,19 +156,31 @@ export function EventVideoPlayer({ id, controls }: EventVideoPlayerProps) {
        * control bar are inside it, so controls stay visible in fullscreen.
        */}
       <div ref={wrapperRef} className="video-player">
-        <ApiVideoPlayer
-          ref={playerRef}
-          video={{ id }}
-          chromeless
-          style={{ width: "100%", aspectRatio: "16/9", display: "block" }}
-          onReady={() => { isReadyRef.current = true; }}
-          onPlay={() => updateState({ isPlaying: true })}
-          onPause={() => updateState({ isPlaying: false })}
-          onEnded={() => updateState({ isPlaying: false })}
-          onTimeUpdate={(t) => updateState({ currentTime: t })}
-          onDurationChange={(d) => updateState({ duration: d })}
-          onVolumeChange={(v) => updateState({ volume: v, isMuted: v === 0 })}
-        />
+        <div className="video-player__video-area">
+          <ApiVideoPlayer
+            ref={playerRef}
+            video={{ id }}
+            chromeless
+            style={{ width: "100%", aspectRatio: "16/9", display: "block" }}
+            onReady={() => { isReadyRef.current = true; }}
+            onPlay={() => updateState({ isPlaying: true })}
+            onPause={() => updateState({ isPlaying: false })}
+            onEnded={() => updateState({ isPlaying: false })}
+            onTimeUpdate={(t) => updateState({ currentTime: t })}
+            onDurationChange={(d) => updateState({ duration: d })}
+            onVolumeChange={(v) => updateState({ volume: v, isMuted: v === 0 })}
+          />
+          {/* Transparent overlay so clicks on the video area toggle play/pause */}
+          <div
+            className="video-player__click-overlay"
+            aria-hidden="true"
+            onClick={() =>
+              stateRef.current.isPlaying
+                ? playerRef.current?.pause()
+                : playerRef.current?.play()
+            }
+          />
+        </div>
         {controls && (
           <div className="video-player__controls-bar">{controls}</div>
         )}

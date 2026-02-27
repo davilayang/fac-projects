@@ -13,6 +13,21 @@
   height: 100vh;
 }
 
+.video-player__video-area {
+  position: relative;
+}
+
+.video-player__click-overlay {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+/* Hide the click cursor when idle in fullscreen */
+.video-player:fullscreen[data-idle="true"] .video-player__click-overlay {
+  cursor: none;
+}
+
 .video-player__controls-bar {
   flex-shrink: 0;
   transition:
