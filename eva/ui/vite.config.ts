@@ -9,6 +9,7 @@ export default defineConfig({
     alias: {
       "@eva-configs": resolve(__dirname, "src/configs"),
       "@eva-elements": resolve(__dirname, "src/components/elements"),
+      "@eva-elements/VideoPlayer/controls": resolve(__dirname, "src/components/elements/VideoPlayer/controls"),
       "@eva-icons": resolve(__dirname, "src/components/icons"),
       "@eva-providers": resolve(__dirname, "src/providers"),
       "@eva-router": resolve(__dirname, "src/router.ts"),

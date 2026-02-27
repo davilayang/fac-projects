@@ -21,6 +21,7 @@
     "paths": {
       "@eva-configs": ["src/configs"],
       "@eva-elements": ["src/components/elements"],
+      "@eva-elements/*": ["src/components/elements/*"],
       "@eva-icons": ["src/components/icons"],
       "@eva-providers": ["src/providers"],
       "@eva-router": ["src/router.ts"],

@@ -1,26 +1,66 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
-import { SessionProvider } from "@livekit/components-react";
+import {
+  SessionProvider,
+  useSessionContext,
+  useVoiceAssistant,
+  RoomAudioRenderer,
+} from "@livekit/components-react";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@eva-icons";
 import { ROUTES } from "@eva-router";
 import { VideoPlayer, Tabs } from "@eva-elements";
+import { VideoControls } from "@eva-elements/VideoPlayer/controls";
 import type { TabItem } from "@eva-elements";
 import { useAgentSession } from "@eva-providers";
 
-import { VoiceGuideTab, MomentsTab, AgentOverlayInner } from "./_components";
+import { VoiceGuideTab, MomentsTab } from "./_components";
 
 import "./Event.css";
+
+// ── Agent control bar wiring ──────────────────────────────────────────────
+// Reads LiveKit session/agent state and passes plain props down to AgentButton.
+// This is the only place in the app that knows about both LiveKit and the
+// video control bar — everything else is decoupled.
+
+function AgentControls() {
+  const session = useSessionContext();
+  const { state: agentState } = useVoiceAssistant();
+  const [muted, setMuted] = useState(false);
+
+  const handleStart = useCallback(() => void session.start(), [session]);
+  const handleEnd = useCallback(() => void session.end(), [session]);
+  const handleToggleMute = useCallback(() => setMuted((m) => !m), []);
+
+  return (
+    <>
+      {session.isConnected && <RoomAudioRenderer muted={muted} />}
+      <VideoControls
+        agent={{
+          isConnected: session.isConnected,
+          agentState,
+          muted,
+          onStart: handleStart,
+          onEnd: handleEnd,
+          onToggleMute: handleToggleMute,
+        }}
+      />
+    </>
+  );
+}
+
+// ── Event page ────────────────────────────────────────────────────────────
 
 export function Event() {
   const { id } = useParams<{ id: string }>();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const session = useAgentSession();
 
-  // Keep a stable ref so the cleanup always reaches the live session
-  // without listing `session` as a dep (prevents StrictMode double-fire).
   const sessionRef = useRef(session);
-  sessionRef.current = session;
+
+  useEffect(() => {
+    sessionRef.current = session;
+  });
 
   useEffect(() => {
     return () => {
@@ -70,7 +110,7 @@ export function Event() {
           <header className="event__header">
             <p className="event__eyebrow">Now Playing</p>
             <h1 className="event__title">{id}</h1>
-            <VideoPlayer id={id} overlay={<AgentOverlayInner />} />
+            <VideoPlayer id={id} controls={<AgentControls />} />
           </header>
 
           <div className="event__sidebar" aria-expanded={sidebarOpen}>

@@ -1,16 +1,18 @@
-.video-player-section {
-  position: relative;
+.video-player {
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  border-radius: 0.75rem;
+  overflow: hidden;
 }
 
-.video-player-section__overlay {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 20;
-  padding: 0.75rem;
-  pointer-events: none;
+/* In fullscreen the wrapper fills the entire screen — no border radius */
+.video-player:fullscreen {
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
 }
 
-.video-player-section__overlay > * {
-  pointer-events: auto;
+.video-player__controls-bar {
+  flex-shrink: 0;
 }

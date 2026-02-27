@@ -1,0 +1,8 @@
+.video-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(8, 9, 26, 0.85);
+  backdrop-filter: blur(12px);
+}
