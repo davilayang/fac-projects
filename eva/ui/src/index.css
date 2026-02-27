@@ -1,0 +1,140 @@
+/* ── Fonts ────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: 'Technor';
+  src: url('/fonts/Technor-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Variable.woff2') format('woff2-variations');
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'Tabular';
+  src: url('/fonts/Tabular-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+/* ── Design tokens ────────────────────────────────────────────────────── */
+
+:root {
+  /* Typography */
+  --font-display: 'Technor', system-ui, sans-serif;
+  --font-ui:      'General Sans', system-ui, sans-serif;
+  --font-mono:    'Tabular', ui-monospace, monospace;
+
+  /* ── Backgrounds ── */
+  --color-bg-deep:  #08091a;   /* outermost dark navy */
+  --color-bg-base:  #0d1033;   /* base midnight blue */
+  --color-bg-inner: #1a1f5e;   /* inner circle / indigo fill */
+  --color-bg-mid-a: #111438;   /* gradient mid-stop A */
+  --color-bg-mid-b: #0a0c28;   /* gradient mid-stop B */
+  --color-bg-card:  rgba(13, 16, 51, 0.55); /* glassmorphism card */
+
+  /* ── Accent — cyan-blue neon ── */
+  --color-accent-cyan:       #4dc8e8;
+  --color-accent-cyan-muted: #5bb8d4;
+
+  /* ── Accent — lavender ── */
+  --color-accent-lavender:            #8899cc;  /* base brand value */
+  --color-accent-lavender-accessible: #b0c0e8;  /* WCAG AA on dark card */
+
+  /* ── Microphone tones ── */
+  --color-mic-body:      #6a8ab5;
+  --color-mic-highlight: #c5d5e8;
+
+  /* ── Book pages ── */
+  --color-book-peach:  #f0a080;
+  --color-book-purple: #8080d0;
+  --color-book-pink:   #d080b0;
+
+  /* ── Sparkles / glow ── */
+  --color-sparkle:   #e8a030;
+  --color-glow-rose: #c87060;
+
+  /* ── White scale (alpha) ── */
+  --color-white:         #ffffff;
+  --color-white-87:      rgba(255, 255, 255, 0.87);
+  --color-white-75:      rgba(255, 255, 255, 0.75);
+  --color-white-14:      rgba(255, 255, 255, 0.14);
+  --color-white-12:      rgba(255, 255, 255, 0.12);
+  --color-white-10:      rgba(255, 255, 255, 0.10);
+  --color-white-08:      rgba(255, 255, 255, 0.08);
+  --color-white-05:      rgba(255, 255, 255, 0.05);
+  --color-white-03:      rgba(255, 255, 255, 0.028); /* grid lines */
+
+  /* ── Black scale (alpha) ── */
+  --color-black-55: rgba(0, 0, 0, 0.55);
+
+  /* ── Cyan alpha scale ── */
+  --color-cyan-glow-06:  rgba(77, 200, 232, 0.06);
+  --color-cyan-glow-08:  rgba(77, 200, 232, 0.08);
+  --color-cyan-glow-10:  rgba(77, 200, 232, 0.10);
+  --color-cyan-glow-30:  rgba(77, 200, 232, 0.30);
+  --color-cyan-glow-35:  rgba(77, 200, 232, 0.35);
+  --color-cyan-glow-40:  rgba(77, 200, 232, 0.40);
+  --color-cyan-glow-55:  rgba(77, 200, 232, 0.55);
+  --color-cyan-glow-85:  rgba(77, 200, 232, 0.85);
+
+  /* ── Rose / lavender alpha ── */
+  --color-rose-glow-28:     rgba(200, 112, 96, 0.28);
+  --color-lavender-glow-15: rgba(136, 153, 204, 0.15);
+
+  /* ── Semantic surfaces & borders ── */
+  --color-surface-1:   var(--color-white-05);
+  --color-surface-2:   var(--color-white-08);
+  --color-border-soft: var(--color-white-10);
+  --color-border-card: var(--color-white-12);
+  --color-border-btn:  var(--color-white-14);
+  --color-border-glow: var(--color-cyan-glow-35);
+
+  /* ── Semantic text ── */
+  --color-text-primary:   var(--color-white);
+  --color-text-body:      var(--color-white-87);
+  --color-text-secondary: var(--color-accent-lavender-accessible);
+  --color-text-muted:     var(--color-white-75);
+
+  /* ── Semantic aliases ── */
+  --color-primary:       var(--color-accent-cyan);
+  --color-primary-muted: var(--color-accent-cyan-muted);
+  --color-secondary:     var(--color-accent-lavender);
+  --color-highlight:     var(--color-sparkle);
+  --color-surface:       var(--color-bg-inner);
+  --color-bg:            var(--color-bg-base);
+}
+
+/* ── Reset & base ─────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: var(--font-ui);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-text-body);
+  background-color: var(--color-bg-deep);
+}

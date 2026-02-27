@@ -1,0 +1,163 @@
+/* ── Talk button (idle / disconnected) ───────────────────────────────────── */
+
+.agent-overlay__talk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-btn);
+  background: rgba(8, 9, 26, 0.8);
+  backdrop-filter: blur(12px);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
+}
+
+.agent-overlay__talk-btn:hover {
+  border-color: var(--color-border-glow);
+  background: rgba(8, 9, 26, 0.9);
+  box-shadow: 0 0 12px var(--color-cyan-glow-10);
+  color: var(--color-accent-cyan);
+}
+
+.agent-overlay__talk-btn:focus-visible {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 2px;
+}
+
+/* ── Connected status pill ───────────────────────────────────────────────── */
+
+.agent-overlay__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.4rem 0.625rem 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-btn);
+  background: rgba(8, 9, 26, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.agent-overlay__status-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  min-width: 5.5rem;
+}
+
+/* ── Mute icon button ────────────────────────────────────────────────────── */
+
+.agent-overlay__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-soft);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    color 0.2s;
+}
+
+.agent-overlay__icon-btn:hover {
+  border-color: var(--color-border-glow);
+  color: var(--color-accent-cyan);
+}
+
+.agent-overlay__icon-btn[data-muted="true"] {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #f87171;
+}
+
+.agent-overlay__icon-btn[data-muted="true"]:hover {
+  border-color: rgba(248, 113, 113, 0.7);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.agent-overlay__icon-btn:focus-visible {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 2px;
+}
+
+.agent-overlay__icon-btn[data-muted="true"]:focus-visible {
+  outline-color: #f87171;
+}
+
+/* ── End button ──────────────────────────────────────────────────────────── */
+
+.agent-overlay__end-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  background: rgba(248, 113, 113, 0.08);
+  color: #f87171;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.agent-overlay__end-btn:hover {
+  border-color: rgba(248, 113, 113, 0.6);
+  background: rgba(248, 113, 113, 0.15);
+}
+
+.agent-overlay__end-btn:focus-visible {
+  outline: 2px solid #f87171;
+  outline-offset: 2px;
+}
+
+/* ── Bar visualizer ──────────────────────────────────────────────────────── */
+
+.agent-visualizer {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 16px;
+}
+
+.agent-visualizer__bar {
+  display: block;
+  width: 3px;
+  height: 20%;
+  border-radius: 999px;
+  background: var(--color-border-soft);
+  transition:
+    height 0.1s ease,
+    background 0.15s ease;
+}
+
+.agent-visualizer__bar[data-highlighted="true"] {
+  background: var(--color-accent-cyan);
+  box-shadow: 0 0 4px var(--color-cyan-glow-35);
+}
+
+/* When speaking, bars grow to their volume height */
+.agent-visualizer[data-state="speaking"] .agent-visualizer__bar {
+  background: var(--color-accent-cyan);
+}
+
+.agent-visualizer[data-state="speaking"] .agent-visualizer__bar[data-highlighted="true"] {
+  box-shadow: 0 0 6px var(--color-cyan-glow-55);
+}

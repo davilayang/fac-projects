@@ -1,0 +1,47 @@
+.video-player {
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+/* In fullscreen the wrapper fills the entire screen — no border radius */
+.video-player:fullscreen {
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+.video-player__video-area {
+  position: relative;
+}
+
+.video-player__click-overlay {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+/* Hide the click cursor when idle in fullscreen */
+.video-player:fullscreen[data-idle="true"] .video-player__click-overlay {
+  cursor: none;
+}
+
+.video-player__controls-bar {
+  flex-shrink: 0;
+  transition:
+    opacity 0.3s ease,
+    translate 0.3s ease;
+}
+
+/* Hide controls bar and cursor after idle timeout — fullscreen only */
+.video-player:fullscreen[data-idle="true"] {
+  cursor: none;
+}
+
+.video-player:fullscreen[data-idle="true"] .video-player__controls-bar {
+  opacity: 0;
+  pointer-events: none;
+  translate: 0 0.5rem;
+}

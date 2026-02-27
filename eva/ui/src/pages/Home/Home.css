@@ -1,0 +1,93 @@
+/* ── Home / Login page ────────────────────────────────────────────────── */
+
+.page-home {
+  display: flex;
+  min-height: 100svh;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Logo ─────────────────────────────────────────────────────────────── */
+
+.page-login__logo-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 0.25rem;
+}
+
+.page-login__logo {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  animation: logo-pulse 4s ease-in-out infinite;
+}
+
+.page-login__logo-glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-cyan-glow-30) 0%, transparent 70%);
+  animation: glow-pulse 4s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { filter: drop-shadow(0 0 12px var(--color-cyan-glow-55)); }
+  50%       { filter: drop-shadow(0 0 24px var(--color-cyan-glow-85)); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1);    }
+  50%       { opacity: 1;   transform: scale(1.12); }
+}
+
+/* ── Login typography ─────────────────────────────────────────────────── */
+
+.page-login__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--color-accent-cyan) 0%, var(--color-accent-lavender) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-login__subtitle {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+/* ── Divider ──────────────────────────────────────────────────────────── */
+
+.page-login__divider {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--color-border-soft);
+  margin: 0.75rem 0 0.25rem;
+}
+
+/* ── Hint ─────────────────────────────────────────────────────────────── */
+
+.page-login__hint {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  letter-spacing: 0.01em;
+}

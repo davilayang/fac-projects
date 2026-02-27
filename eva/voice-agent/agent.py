@@ -121,7 +121,7 @@ class Assistant(Agent):
         if time is not None:
             payload["time"] = time
         await self._rpc(context, "video.addNote", payload)
-        return f"Note saved."
+        return "Note saved."
 
 
 server = AgentServer()

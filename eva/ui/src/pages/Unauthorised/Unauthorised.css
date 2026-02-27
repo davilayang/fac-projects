@@ -1,0 +1,42 @@
+/* ── Unauthorised page ────────────────────────────────────────────────── */
+
+.page-unauth__icon {
+  color: var(--color-glow-rose);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+  filter: drop-shadow(0 0 10px rgba(200, 112, 96, 0.5));
+}
+
+.page-unauth__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-text-primary);
+}
+
+.page-unauth__body {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-ui);
+  font-size: 0.825rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  max-width: 26ch;
+}
+
+.page-unauth__back {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-border-soft);
+  transition: color 0.2s;
+}
+
+.page-unauth__back:hover {
+  color: var(--color-text-primary);
+}
