@@ -4,6 +4,8 @@ import {
   SessionProvider,
   useSessionContext,
   useVoiceAssistant,
+  useLocalParticipant,
+  useIsSpeaking,
   RoomAudioRenderer,
 } from "@livekit/components-react";
 
@@ -30,14 +32,17 @@ interface AgentControlsProps {
 function AgentControls({ onSpeakingChange }: AgentControlsProps) {
   const session = useSessionContext();
   const { state: agentState } = useVoiceAssistant();
+  const { localParticipant } = useLocalParticipant();
+  const isUserSpeaking = useIsSpeaking(localParticipant);
   const [muted, setMuted] = useState(false);
 
   const handleStart = useCallback(() => void session.start(), [session]);
   const handleEnd = useCallback(() => void session.end(), [session]);
   const handleToggleMute = useCallback(() => setMuted((m) => !m), []);
 
-  const isSpeaking = session.isConnected && agentState === "speaking";
-  useEffect(() => { onSpeakingChange(isSpeaking); }, [isSpeaking, onSpeakingChange]);
+  // Pause while agent OR user is speaking
+  const shouldPause = session.isConnected && (agentState === "speaking" || isUserSpeaking);
+  useEffect(() => { onSpeakingChange(shouldPause); }, [shouldPause, onSpeakingChange]);
 
   return (
     <>
