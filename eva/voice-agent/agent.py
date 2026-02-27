@@ -1,8 +1,11 @@
+import asyncio
 import json
 import os
 
+import httpx
 from textwrap import dedent
 from dotenv import load_dotenv
+from pinecone import Pinecone
 from livekit import agents, rtc
 from livekit.agents import (
     Agent,
@@ -12,17 +15,21 @@ from livekit.agents import (
     ToolError,
     function_tool,
     inference,
-    mcp,
     room_io,
 )
 from livekit.plugins import noise_cancellation, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
-load_dotenv(".env.local")
+load_dotenv(".env")
+load_dotenv(".env.local", override=True)
+
+
+PINECONE_NAMESPACE = "evt_spreadsheet_hacks"
+OPENAI_EMBEDDING_MODEL = "text-embedding-3-large"
 
 
 class Assistant(Agent):
-    def __init__(self, pinecone_server: mcp.MCPServerStdio) -> None:
+    def __init__(self, index) -> None:
         super().__init__(
             instructions=dedent("""\
                 You are a helpful voice AI assistant for an interactive video page.
@@ -33,9 +40,15 @@ class Assistant(Agent):
 
                 You are curious, friendly, and have a sense of humor.
                 You can fully control the video through tools.
+
+                If the user asks to play, pause, jump to a timestamp, rewind,
+                or skip forward/backward, always use the corresponding video
+                control tool instead of explaining what to click.
+
+                If the user asks to remember something, save a bookmark, or write a note, use add_video_bookmark or add_video_note.
             """),
         )
-        self._pinecone = pinecone_server
+        self._index = index
 
     async def _rpc(
         self, context: RunContext, method: str, payload: dict | None = None
@@ -53,7 +66,9 @@ class Assistant(Agent):
         )
 
     @function_tool()
-    async def search_video_content(self, context: RunContext, query_text: str) -> str:
+    async def search_video_content(
+        self, context: RunContext, query_text: str,
+    ) -> str:
         """Search the video transcript for relevant segments by topic or keyword.
         Use when the user asks what was said, discussed, or covered in the video.
         Do not use for video playback control.
@@ -61,45 +76,51 @@ class Assistant(Agent):
         Args:
             query_text: A natural-language description of the topic or content to find.
         """
-        if self._pinecone._client is None:
-            raise ToolError("Search service is not available.")
-
-        result = await self._pinecone._client.call_tool(
-            "search-records", {
-                "name": "avengers",
-                "namespace": "evt_spreadsheet_hacks",
-                "query": {
-                    "topK": 10,
-                    "inputs": {"text": query_text},
+        # Step 1: embed the query text with OpenAI
+        async with httpx.AsyncClient() as client:
+            emb_response = await client.post(
+                "https://api.openai.com/v1/embeddings",
+                headers={
+                    "Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}",
+                    "Content-Type": "application/json",
                 },
-            }
-        )
-
-        if result.isError:
-            error_str = "\n".join(
-                part.text if hasattr(part, "text") else str(part)
-                for part in result.content
+                json={"model": OPENAI_EMBEDDING_MODEL, "input": query_text},
+                timeout=15,
             )
-            raise ToolError(error_str)
-        if len(result.content) == 1:
-            return result.content[0].model_dump_json()
-        elif len(result.content) > 1:
-            return json.dumps([item.model_dump() for item in result.content])
-        return "No results found."
+        if emb_response.status_code != 200:
+            raise ToolError(f"Embedding failed ({emb_response.status_code}): {emb_response.text}")
+        vector = emb_response.json()["data"][0]["embedding"]
+
+        # Step 2: query Pinecone with the vector using the Python SDK
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: self._index.query(
+                vector=vector,
+                top_k=10,
+                namespace=PINECONE_NAMESPACE,
+                include_metadata=True,
+            ),
+        )
+        matches = response.get("matches", [])
+        if not matches:
+            return "No relevant segments found."
+        return json.dumps([
+            {"id": m["id"], "score": m["score"], "metadata": m.get("metadata", {})}
+            for m in matches
+        ])
 
     @function_tool()
     async def play_video(self, context: RunContext) -> str:
         """Resume or start playing the video.
-        Use when the user asks to play, resume, or start the video.
-        """
+        Use when the user asks to play, resume, or start the video."""
         await self._rpc(context, "video.play")
         return "Video is now playing."
 
     @function_tool()
     async def pause_video(self, context: RunContext) -> str:
         """Pause the video.
-        Use when the user asks to pause or stop the video.
-        """
+        Use when the user asks to pause or stop the video."""
         await self._rpc(context, "video.pause")
         return "Video paused."
 
@@ -141,7 +162,7 @@ class Assistant(Agent):
         Args:
             label: A short descriptive label for the bookmark.
             time: Absolute timestamp in seconds to bookmark. Defaults to the
-            current playback position.
+                  current playback position.
         """
         payload: dict = {"label": label}
         if time is not None:
@@ -160,7 +181,7 @@ class Assistant(Agent):
         Args:
             text: The content of the note to save.
             time: Absolute timestamp in seconds to attach the note to. Defaults
-            to the current playback position.
+                  to the current playback position.
         """
         payload: dict = {"text": text}
         if time is not None:
@@ -174,12 +195,8 @@ server = AgentServer()
 
 @server.rtc_session(agent_name="eva")
 async def my_agent(ctx: agents.JobContext):
-
-    pinecone = mcp.MCPServerStdio(
-        command="npx",
-        args=["-y", "@pinecone-database/mcp"],
-        env={**os.environ, "PINECONE_API_KEY": os.environ["PINECONE_API_TOKEN"]},
-    )
+    pc = Pinecone(api_key=os.environ["PINECONE_API_TOKEN"])
+    index = pc.Index(host=os.environ["PINECONE_INDEX_HOST"])
 
     session = AgentSession(
         stt="deepgram/nova-3:multi",
@@ -191,12 +208,11 @@ async def my_agent(ctx: agents.JobContext):
         ),
         vad=silero.VAD.load(),
         turn_detection=MultilingualModel(),
-        mcp_servers=[pinecone],
     )
 
     await session.start(
         room=ctx.room,
-        agent=Assistant(pinecone),
+        agent=Assistant(index),
         room_options=room_io.RoomOptions(
             audio_input=room_io.AudioInputOptions(
                 noise_cancellation=lambda params: (
