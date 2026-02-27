@@ -1,6 +1,6 @@
 import { Link } from "react-router";
-import { useAuth } from "../../auth/useAuth";
-import { ROUTES } from "../../router";
+import { useAuth } from "@eva-providers";
+import { ROUTES } from "@eva-router";
 import "./AppNav.css";
 
 export function AppNav() {

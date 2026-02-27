@@ -2,13 +2,23 @@ import "dotenv/config";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import passport from "./passport.js";
-import routes from "./routes.js";
+import passport from "./lib/passport.js";
+import routes from "./routes/index.js";
 
-const REQUIRED_ENV = ["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET", "AUTH_CALLBACK_URL", "JWT_SECRET"];
+const REQUIRED_ENV = [
+  "AUTH_GITHUB_ID",
+  "AUTH_GITHUB_SECRET",
+  "AUTH_CALLBACK_URL",
+  "JWT_SECRET",
+  "LIVEKIT_API_KEY",
+  "LIVEKIT_API_SECRET",
+  "LIVEKIT_URL",
+];
 const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missing.length > 0) {
-  console.error(`Missing required environment variables: ${missing.join(", ")}`);
+  console.error(
+    `Missing required environment variables: ${missing.join(", ")}`,
+  );
   process.exit(1);
 }
 
@@ -22,9 +32,10 @@ app.use(
   cors({
     origin: UI_ORIGIN,
     credentials: true,
-  })
+  }),
 );
 
+app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 app.use(routes);

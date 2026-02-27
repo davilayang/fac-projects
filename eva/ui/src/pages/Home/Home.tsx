@@ -1,14 +1,15 @@
 import { Navigate } from "react-router";
 import { Button, Card } from "@eva-elements";
 import { GitHubIcon } from "@eva-icons";
-import { useAuth } from "../../auth/useAuth";
-import { ROUTES } from "../../router";
+import { useAuth } from "@eva-providers";
+import { ROUTES } from "@eva-router";
 import "./Home.css";
 
 export function Home() {
   const { signIn, status } = useAuth();
 
-  if (status === "authenticated") return <Navigate to={ROUTES.EVENTS} replace />;
+  if (status === "authenticated")
+    return <Navigate to={ROUTES.EVENTS} replace />;
 
   return (
     <main className="page-home">
@@ -31,7 +32,11 @@ export function Home() {
 
         <p className="page-login__hint">Sign in to continue</p>
 
-        <Button icon={<GitHubIcon size="small" />} type="button" onClick={signIn}>
+        <Button
+          icon={<GitHubIcon size="small" />}
+          type="button"
+          onClick={signIn}
+        >
           Sign in with GitHub
         </Button>
       </Card>

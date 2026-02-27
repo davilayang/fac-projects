@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
-import { useParams } from "react-router";
-import { Link } from "react-router";
+import { Link, useParams } from "react-router";
 
-import { ROUTES } from "../../router";
-
+import { ChevronLeftIcon, ChevronRightIcon } from "@eva-icons";
+import { ROUTES } from "@eva-router";
 import { VideoPlayer, Tabs } from "@eva-elements";
 import type { TabItem } from "@eva-elements";
-import { ChevronLeftIcon, ChevronRightIcon } from "@eva-icons";
 
 import { VoiceGuideTab, MomentsTab } from "./_components";
 
@@ -25,7 +23,7 @@ export function Event() {
         content: <MomentsTab videoId={id ?? ""} />,
       },
     ],
-    [id]
+    [id],
   );
 
   if (!id) {

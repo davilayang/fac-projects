@@ -1,3 +1,5 @@
+import { env, API_VIDEO_CONFIG } from "@eva-configs";
+
 export interface ApiVideoAssetSet {
   thumbnail?: string;
   player?: string;
@@ -32,11 +34,12 @@ export interface ApiVideoListResponse {
   pagination: ApiVideoPagination;
 }
 
-const APIVIDEO_API_KEY = import.meta.env.VITE_APIVIDEO_API_KEY as string | undefined;
-export const PAGE_SIZE = 12;
-
-function buildListUrl(currentPage: number, pageSize: number, title?: string): URL {
-  const url = new URL("/videos", "https://ws.api.video");
+function buildListUrl(
+  currentPage: number,
+  pageSize: number,
+  title?: string,
+): URL {
+  const url = new URL("/videos", API_VIDEO_CONFIG.BASE_URL);
   url.searchParams.set("currentPage", String(currentPage));
   url.searchParams.set("pageSize", String(pageSize));
   url.searchParams.set("sortBy", "publishedAt");
@@ -47,16 +50,12 @@ function buildListUrl(currentPage: number, pageSize: number, title?: string): UR
 
 export async function listPage(
   currentPage: number,
-  pageSize: number = PAGE_SIZE,
+  pageSize: number = API_VIDEO_CONFIG.DEFAULT_PAGE_SIZE,
   title?: string,
 ): Promise<ApiVideoListResponse> {
-  if (!APIVIDEO_API_KEY) {
-    throw new Error("VITE_APIVIDEO_API_KEY is not configured");
-  }
-
   const response = await fetch(buildListUrl(currentPage, pageSize, title), {
     headers: {
-      Authorization: `Bearer ${APIVIDEO_API_KEY}`,
+      Authorization: `Bearer ${env.VITE_APIVIDEO_API_KEY}`,
       Accept: "application/json",
     },
   });

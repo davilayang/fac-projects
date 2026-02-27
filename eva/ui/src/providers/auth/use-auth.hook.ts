@@ -1,5 +1,9 @@
 import { useContext } from "react";
-import { AuthContext, type AuthContextValue, type AuthUser } from "./authTypes";
+import {
+  AuthContext,
+  type AuthContextValue,
+  type AuthUser,
+} from "./auth.types";
 
 export type { AuthUser, AuthContextValue };
 
