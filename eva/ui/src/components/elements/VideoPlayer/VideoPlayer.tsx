@@ -86,9 +86,14 @@ interface EventVideoPlayerProps {
    * are always visible regardless of fullscreen state.
    */
   controls?: ReactNode;
+  /**
+   * When true, pauses the video immediately and resumes (after a short delay)
+   * when it flips back to false. Pass `isConnected && agentState === "speaking"`.
+   */
+  pauseOnAgentSpeech?: boolean;
 }
 
-export function EventVideoPlayer({ id, controls }: EventVideoPlayerProps) {
+export function EventVideoPlayer({ id, controls, pauseOnAgentSpeech = false }: EventVideoPlayerProps) {
   const room = useRoomContext();
   const playerRef = useRef<ApiVideoPlayerRef>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -193,6 +198,40 @@ export function EventVideoPlayer({ id, controls }: EventVideoPlayerProps) {
         window.eventVideoPlayer = undefined;
     };
   }, [id, seekBy, setCurrentTime]);
+
+  // ── Auto-pause while agent is speaking, resume when done ─────────────────
+  const wasPlayingRef = useRef(false);
+  const prevPauseRef = useRef(false);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+
+    const wasPausing = prevPauseRef.current;
+
+    if (pauseOnAgentSpeech && !wasPausing) {
+      // Agent just started speaking — pause and remember play state
+      wasPlayingRef.current = stateRef.current.isPlaying;
+      if (stateRef.current.isPlaying) playerRef.current?.pause();
+    }
+
+    if (!pauseOnAgentSpeech && wasPausing && wasPlayingRef.current) {
+      // Agent just stopped speaking — resume after short delay to avoid jitter
+      resumeTimerRef.current = setTimeout(() => {
+        playerRef.current?.play();
+      }, 450);
+      wasPlayingRef.current = false;
+    }
+
+    prevPauseRef.current = pauseOnAgentSpeech;
+
+    return () => {
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
+  }, [pauseOnAgentSpeech]);
 
   // ── LiveKit RPC handlers — agent calls these to control the player ────────
   useEffect(() => {

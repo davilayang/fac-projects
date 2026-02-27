@@ -23,7 +23,11 @@ import "./Event.css";
 // This is the only place in the app that knows about both LiveKit and the
 // video control bar — everything else is decoupled.
 
-function AgentControls() {
+interface AgentControlsProps {
+  onSpeakingChange: (speaking: boolean) => void;
+}
+
+function AgentControls({ onSpeakingChange }: AgentControlsProps) {
   const session = useSessionContext();
   const { state: agentState } = useVoiceAssistant();
   const [muted, setMuted] = useState(false);
@@ -31,6 +35,9 @@ function AgentControls() {
   const handleStart = useCallback(() => void session.start(), [session]);
   const handleEnd = useCallback(() => void session.end(), [session]);
   const handleToggleMute = useCallback(() => setMuted((m) => !m), []);
+
+  const isSpeaking = session.isConnected && agentState === "speaking";
+  useEffect(() => { onSpeakingChange(isSpeaking); }, [isSpeaking, onSpeakingChange]);
 
   return (
     <>
@@ -54,6 +61,7 @@ function AgentControls() {
 export function Event() {
   const { id } = useParams<{ id: string }>();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [agentSpeaking, setAgentSpeaking] = useState(false);
   const session = useAgentSession();
 
   const sessionRef = useRef(session);
@@ -110,7 +118,11 @@ export function Event() {
           <header className="event__header">
             <p className="event__eyebrow">Now Playing</p>
             <h1 className="event__title">{id}</h1>
-            <VideoPlayer id={id} controls={<AgentControls />} />
+            <VideoPlayer
+              id={id}
+              pauseOnAgentSpeech={agentSpeaking}
+              controls={<AgentControls onSpeakingChange={setAgentSpeaking} />}
+            />
           </header>
 
           <div className="event__sidebar" aria-expanded={sidebarOpen}>
