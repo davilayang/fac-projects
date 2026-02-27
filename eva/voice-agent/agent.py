@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from typing import Literal
 
 import httpx
 from textwrap import dedent
@@ -36,16 +37,11 @@ class Assistant(Agent):
                 You eagerly assist users with their questions by providing
                 information from your extensive knowledge.
                 Your responses are concise, to the point, and without any complex
-                formatting or punctuation including emojis, asterisks, or other symbols.
+                formatting or punctuation including emojis, asterisks, or other
+                symbols.
 
                 You are curious, friendly, and have a sense of humor.
                 You can fully control the video through tools.
-
-                If the user asks to play, pause, jump to a timestamp, rewind,
-                or skip forward/backward, always use the corresponding video
-                control tool instead of explaining what to click.
-
-                If the user asks to remember something, save a bookmark, or write a note, use add_video_bookmark or add_video_note.
             """),
         )
         self._index = index
@@ -74,9 +70,10 @@ class Assistant(Agent):
         start_after_seconds: float | None = None,
         end_before_seconds: float | None = None,
         section: str | None = None,
+        granularity: Literal["summary", "detail"] | None = None,
     ) -> str:
         """Search the video transcript for relevant segments by topic or keyword,
-        with optional filters on speaker, time range, or section.
+        with optional filters on speaker, time range, section, or granularity.
         Use when the user asks what was said, discussed, or covered in the video.
         Do not use for video playback control.
 
@@ -89,6 +86,8 @@ class Assistant(Agent):
             end_before_seconds: Only return segments ending before this timestamp in
                 seconds. Use for queries like "in the first 5 minutes".
             section: Filter results to a specific section of the video.
+            granularity: "summary" for high-level overviews, "detail" for verbatim
+                transcript segments. Defaults to no filter (returns both).
         """
         # Step 1: embed the query text with OpenAI
         async with httpx.AsyncClient() as client:
@@ -115,6 +114,8 @@ class Assistant(Agent):
             conditions.append({"end_seconds": {"$lte": end_before_seconds}})
         if section is not None:
             conditions.append({"section": {"$eq": section}})
+        if granularity is not None:
+            conditions.append({"granularity": {"$eq": granularity}})
         metadata_filter = {"$and": conditions} if len(conditions) > 1 else conditions[0] if conditions else None
 
         # Step 2: query Pinecone with the vector using the Python SDK
