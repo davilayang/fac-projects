@@ -67,14 +67,28 @@ class Assistant(Agent):
 
     @function_tool()
     async def search_video_content(
-        self, context: RunContext, query_text: str,
+        self,
+        context: RunContext,
+        query_text: str,
+        speaker_name: str | None = None,
+        start_after_seconds: float | None = None,
+        end_before_seconds: float | None = None,
+        section: str | None = None,
     ) -> str:
-        """Search the video transcript for relevant segments by topic or keyword.
+        """Search the video transcript for relevant segments by topic or keyword,
+        with optional filters on speaker, time range, or section.
         Use when the user asks what was said, discussed, or covered in the video.
         Do not use for video playback control.
 
         Args:
             query_text: A natural-language description of the topic or content to find.
+            speaker_name: Filter results to a specific speaker. Use when the user asks
+                what a particular person said.
+            start_after_seconds: Only return segments starting after this timestamp in
+                seconds. Use for queries like "in the last 10 minutes" or "after the break".
+            end_before_seconds: Only return segments ending before this timestamp in
+                seconds. Use for queries like "in the first 5 minutes".
+            section: Filter results to a specific section of the video.
         """
         # Step 1: embed the query text with OpenAI
         async with httpx.AsyncClient() as client:
@@ -91,6 +105,18 @@ class Assistant(Agent):
             raise ToolError(f"Embedding failed ({emb_response.status_code}): {emb_response.text}")
         vector = emb_response.json()["data"][0]["embedding"]
 
+        # Build metadata filter from optional parameters
+        conditions = []
+        if speaker_name is not None:
+            conditions.append({"speaker_name": {"$eq": speaker_name}})
+        if start_after_seconds is not None:
+            conditions.append({"start_seconds": {"$gte": start_after_seconds}})
+        if end_before_seconds is not None:
+            conditions.append({"end_seconds": {"$lte": end_before_seconds}})
+        if section is not None:
+            conditions.append({"section": {"$eq": section}})
+        metadata_filter = {"$and": conditions} if len(conditions) > 1 else conditions[0] if conditions else None
+
         # Step 2: query Pinecone with the vector using the Python SDK
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(
@@ -100,6 +126,7 @@ class Assistant(Agent):
                 top_k=10,
                 namespace=PINECONE_NAMESPACE,
                 include_metadata=True,
+                filter=metadata_filter,
             ),
         )
         matches = response.get("matches", [])
