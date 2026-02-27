@@ -193,6 +193,9 @@ function BookmarkItem({ moment, onDelete, onEdit }: MomentItemProps) {
           <Clock3 size={10} aria-hidden />
           {formatSeconds(moment.time)}
         </span>
+        {moment.source === "agent" && (
+          <span className="moment-item__source-badge">AI</span>
+        )}
       </button>
       <div className="moment-item__controls">
         <button
@@ -246,6 +249,9 @@ function NoteItem({ moment, onDelete, onEdit }: MomentItemProps) {
       >
         <p className="moment-item__note-text">{moment.text}</p>
         <span className="moment-item__note-meta">
+          {moment.source === "agent" && (
+            <span className="moment-item__source-badge">AI</span>
+          )}
           <FileText size={10} aria-hidden />
           <Clock3 size={10} aria-hidden />
           {formatSeconds(moment.time)}

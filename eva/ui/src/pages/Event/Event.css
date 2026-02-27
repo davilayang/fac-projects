@@ -521,6 +521,22 @@
   opacity: 1;
 }
 
+/* Agent-created badge */
+.moment-item__source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-glow);
+  background: rgba(6, 182, 212, 0.08);
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
 /* ── Edit / Add form ── */
 
 .moment-edit-form {
