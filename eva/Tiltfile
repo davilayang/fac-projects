@@ -17,6 +17,15 @@ env = load_env(".env")
 # Load the Docker Compose config so Tilt knows about all services
 docker_compose("./docker-compose.yaml", env_file=".env")
 
+# ── Traefik ───────────────────────────────────────────────────────────────────
+dc_resource(
+    "traefik",
+    links=[
+        "http://localhost:8080",  # Traefik dashboard
+        "http://localhost",       # App entry point
+    ],
+)
+
 # ── Auth server ───────────────────────────────────────────────────────────────
 docker_build(
     "eva-auth-server",
@@ -36,7 +45,8 @@ docker_build(
 
 dc_resource(
     "auth-server",
-    links=["http://localhost:4000"],
+    links=["http://localhost/auth"],
+    resource_deps=["traefik"],
 )
 
 # ── UI ────────────────────────────────────────────────────────────────────────
@@ -54,7 +64,8 @@ docker_build(
 
 dc_resource(
     "ui",
-    links=["http://localhost:8080"],
+    links=["http://localhost"],
+    resource_deps=["traefik"],
 )
 
 # ── Voice agent ───────────────────────────────────────────────────────────────

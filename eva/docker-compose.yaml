@@ -1,6 +1,30 @@
 name: eva
 
+networks:
+  traefik-network:
+    driver: bridge
+    # Explicit name prevents Docker Compose from prepending the project name.
+    # Traefik's static config and container labels reference this exact string.
+    name: eva-traefik-net
+
 services:
+
+  # ── Traefik reverse proxy ─────────────────────────────────────────────────────
+  traefik:
+    image: traefik:v3.3
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"    # Dashboard — remove binding in production via docker-compose.prod.yaml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - traefik-acme:/etc/traefik/acme
+    networks:
+      - traefik-network
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:-}
 
   # ── Auth server ─────────────────────────────────────────────────────────────
   auth-server:
@@ -8,8 +32,6 @@ services:
     build:
       context: ./auth-server
     restart: unless-stopped
-    ports:
-      - "4000:4000"
     environment:
       PORT: "4000"
       AUTH_GITHUB_ID: ${AUTH_GITHUB_ID}
@@ -22,14 +44,31 @@ services:
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
     volumes:
-      # Persist session files across container restarts
       - auth-sessions:/app/sessions
+    networks:
+      - traefik-network
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 5s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=eva-traefik-net"
+      # ── HTTP router ──────────────────────────────────────────────────────────
+      - "traefik.http.routers.auth-server-http.rule=PathPrefix(`/auth`)"
+      - "traefik.http.routers.auth-server-http.entrypoints=web"
+      - "traefik.http.routers.auth-server-http.priority=10"
+      - "traefik.http.routers.auth-server-http.service=auth-server-svc"
+      # ── HTTPS router ─────────────────────────────────────────────────────────
+      - "traefik.http.routers.auth-server-https.rule=PathPrefix(`/auth`)"
+      - "traefik.http.routers.auth-server-https.entrypoints=websecure"
+      - "traefik.http.routers.auth-server-https.priority=10"
+      - "traefik.http.routers.auth-server-https.tls=true"
+      - "traefik.http.routers.auth-server-https.service=auth-server-svc"
+      # ── Service backend ───────────────────────────────────────────────────────
+      - "traefik.http.services.auth-server-svc.loadbalancer.server.port=4000"
 
   # ── UI ───────────────────────────────────────────────────────────────────────
   ui:
@@ -40,13 +79,29 @@ services:
         VITE_AGENT_NAME: ${VITE_AGENT_NAME:-eva}
         VITE_APIVIDEO_API_KEY: ${VITE_APIVIDEO_API_KEY}
     restart: unless-stopped
-    ports:
-      - "8080:80"
+    networks:
+      - traefik-network
     depends_on:
       auth-server:
         condition: service_healthy
       voice-agent:
         condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=eva-traefik-net"
+      # ── HTTP router ──────────────────────────────────────────────────────────
+      - "traefik.http.routers.ui-http.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.ui-http.entrypoints=web"
+      - "traefik.http.routers.ui-http.priority=1"
+      - "traefik.http.routers.ui-http.service=ui-svc"
+      # ── HTTPS router ─────────────────────────────────────────────────────────
+      - "traefik.http.routers.ui-https.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.ui-https.entrypoints=websecure"
+      - "traefik.http.routers.ui-https.priority=1"
+      - "traefik.http.routers.ui-https.tls=true"
+      - "traefik.http.routers.ui-https.service=ui-svc"
+      # ── Service backend ───────────────────────────────────────────────────────
+      - "traefik.http.services.ui-svc.loadbalancer.server.port=80"
 
   # ── Voice agent ──────────────────────────────────────────────────────────────
   voice-agent:
@@ -70,3 +125,4 @@ services:
 
 volumes:
   auth-sessions:
+  traefik-acme:
