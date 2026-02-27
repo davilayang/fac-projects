@@ -1,0 +1,41 @@
+/* ── App shell ────────────────────────────────────────────────────────── */
+
+.app {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  background-color: var(--color-bg-deep);
+  color: var(--color-text-primary);
+}
+
+/* Gradient atmosphere */
+.app__bg {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 4%,  var(--color-cyan-glow-40),      transparent 40%),
+    radial-gradient(circle at 82% 6%,  var(--color-rose-glow-28),      transparent 38%),
+    radial-gradient(circle at 50% 100%, var(--color-lavender-glow-15), transparent 55%),
+    linear-gradient(180deg, var(--color-bg-mid-a) 0%, var(--color-bg-mid-b) 55%, var(--color-bg-deep) 100%);
+  z-index: 0;
+}
+
+/* Subtle two-axis grid */
+.app__grid {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--color-white-03) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-white-03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+  z-index: 0;
+}
+
+/* Page content sits above the fixed background layers */
+.app__content {
+  position: relative;
+  z-index: 1;
+}
