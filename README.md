@@ -106,4 +106,17 @@ docker run -d --env-file .env.local --name eva-voice-agent eva-voice-agent
 # Logs / stop
 docker logs -f eva-voice-agent
 docker rm -f eva-voice-agent
+
+## EVA, Events Voice Agent
+
+Before running commands, change directory to "eva"
+
+```bash
+cd eva
+```
+
+Start Local Server
+
+```bash
+
 ```

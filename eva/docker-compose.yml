@@ -1,0 +1,16 @@
+services:
+  voice-agent:
+    build:
+      context: ./voice-agent
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  web-ui:
+    build:
+      context: ./web-ui
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

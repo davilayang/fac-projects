@@ -116,6 +116,8 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY}
       INWORLD_API_KEY: ${INWORLD_API_KEY}
+      PINECONE_API_TOKEN: ${PINECONE_API_TOKEN}
+      PINECONE_INDEX_HOST: ${PINECONE_INDEX_HOST}
     healthcheck:
       test: ["CMD-SHELL", "true"]
       interval: 10s
