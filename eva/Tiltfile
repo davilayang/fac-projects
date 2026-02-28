@@ -1,0 +1,88 @@
+# -*- mode: Python -*-
+
+# Load .env into a dict so build args can reference it.
+# docker_compose(env_file=) handles runtime vars; this handles build-time args.
+def load_env(path):
+    env = {}
+    for line in str(read_file(path)).splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, _, v = line.partition("=")
+        env[k.strip()] = v.strip().strip('"').strip("'")
+    return env
+
+env = load_env(".env")
+
+# Load the Docker Compose config so Tilt knows about all services
+docker_compose("./docker-compose.yaml", env_file=".env")
+
+# ── Traefik ───────────────────────────────────────────────────────────────────
+dc_resource(
+    "traefik",
+    links=[
+        "http://localhost:8080",  # Traefik dashboard
+        "http://localhost",       # App entry point
+    ],
+)
+
+# ── Auth server ───────────────────────────────────────────────────────────────
+docker_build(
+    "eva-auth-server",
+    context="./auth-server",
+    dockerfile="./auth-server/Dockerfile",
+    live_update=[
+        # Sync source changes directly — no full rebuild needed
+        sync("./auth-server/src", "/app/src"),
+        # If package files change, reinstall deps then restart
+        run(
+            "pnpm install --frozen-lockfile",
+            trigger=["./auth-server/package.json", "./auth-server/pnpm-lock.yaml"],
+        ),
+        restart_container(),
+    ],
+)
+
+dc_resource(
+    "auth-server",
+    links=["http://localhost/auth"],
+    resource_deps=["traefik"],
+)
+
+# ── UI ────────────────────────────────────────────────────────────────────────
+# UI has no live_update — Vite bakes env vars at build time, so any src change
+# triggers a full image rebuild (still fast via layer cache).
+docker_build(
+    "eva-ui",
+    context="./ui",
+    dockerfile="./ui/Dockerfile",
+    build_args={
+        "VITE_AGENT_NAME": env.get("VITE_AGENT_NAME", "eva"),
+        "VITE_APIVIDEO_API_KEY": env.get("VITE_APIVIDEO_API_KEY", ""),
+    },
+)
+
+dc_resource(
+    "ui",
+    links=["http://localhost"],
+    resource_deps=["traefik"],
+)
+
+# ── Voice agent ───────────────────────────────────────────────────────────────
+docker_build(
+    "eva-voice-agent",
+    context="./voice-agent",
+    dockerfile="./voice-agent/Dockerfile",
+    live_update=[
+        # Sync Python source — uv venv stays intact between restarts
+        sync("./voice-agent", "/app"),
+        # Reinstall if dependencies change
+        run(
+            "uv sync --frozen --no-dev",
+            trigger=["./voice-agent/pyproject.toml", "./voice-agent/uv.lock"],
+        ),
+        restart_container(),
+    ],
+)
+
+dc_resource("voice-agent")

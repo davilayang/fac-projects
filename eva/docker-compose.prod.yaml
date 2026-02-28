@@ -1,0 +1,37 @@
+# docker-compose.prod.yaml — production overlay
+#
+# Activates HTTPS redirect and removes the Traefik dashboard port.
+# Apply on top of docker-compose.yaml when deploying to a real server:
+#
+#   docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d
+#
+# Prerequisites:
+#   - Set DOMAIN and ACME_EMAIL in your .env file
+#   - Register your GitHub OAuth callback at https://${DOMAIN}/auth/github/callback
+#   - Set UI_ORIGIN=https://${DOMAIN} in your .env file
+#   - Ports 80 and 443 must be reachable from the internet (for ACME HTTP-01)
+
+services:
+  traefik:
+    ports:
+      # Override: do not bind dashboard to any host port in production.
+      - "80:80"
+      - "443:443"
+    labels:
+      # Permanent HTTP→HTTPS redirect middleware (applied per-router below).
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+
+  auth-server:
+    labels:
+      # Apply redirect to the plain-HTTP auth router.
+      - "traefik.http.routers.auth-server-http.middlewares=redirect-https"
+      # Activate Let's Encrypt for the HTTPS router.
+      - "traefik.http.routers.auth-server-https.tls.certresolver=letsencrypt"
+
+  ui:
+    labels:
+      # Apply redirect to the plain-HTTP ui router.
+      - "traefik.http.routers.ui-http.middlewares=redirect-https"
+      # Activate Let's Encrypt for the HTTPS router.
+      - "traefik.http.routers.ui-https.tls.certresolver=letsencrypt"

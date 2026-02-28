@@ -40,6 +40,8 @@ app.use(cookieParser());
 app.use(passport.initialize());
 app.use(routes);
 
+app.get("/health", (_req, res) => res.sendStatus(200));
+
 app.listen(PORT, () => {
   console.log(`Auth server running on http://localhost:${PORT}`);
 });

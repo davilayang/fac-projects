@@ -1,0 +1,54 @@
+# traefik.yml — Traefik v3 static configuration
+# Mounted into the traefik container at /etc/traefik/traefik.yml read-only.
+#
+# Routing rules, middlewares, and service backends are configured via Docker
+# labels on each service in docker-compose.yaml.
+#
+# HTTP→HTTPS redirect is NOT enabled here to keep local dev working without
+# a real domain/TLS. Enable it in production via docker-compose.prod.yaml.
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+api:
+  # Dashboard available at http://localhost:8080 (insecure — dev only).
+  # In production, remove the port 8080 binding in docker-compose.prod.yaml.
+  dashboard: true
+  insecure: true
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    # Only expose services that have traefik.enable=true label.
+    exposedByDefault: false
+    # Fixed network name — matches the explicit `name: eva-traefik-net` set on
+    # the traefik-network in docker-compose.yaml. Using an explicit name avoids
+    # the default Docker Compose project-name prefix, making it deterministic
+    # regardless of the project name used by Docker Compose or Tilt.
+    network: eva-traefik-net
+    watch: true
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      # Read from environment at Traefik startup.
+      # In dev this is empty — ACME only activates when a router references
+      # this resolver over a publicly reachable domain.
+      email: "${ACME_EMAIL}"
+      storage: /etc/traefik/acme/acme.json
+      # HTTP-01 challenge: Traefik answers on the "web" entry point.
+      # Traefik intercepts /.well-known/acme-challenge/ before any redirect
+      # middleware fires, so this works even with the prod redirect overlay.
+      httpChallenge:
+        entryPoint: web
+
+log:
+  level: INFO
+
+accessLog: {}
