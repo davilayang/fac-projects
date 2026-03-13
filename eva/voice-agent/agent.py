@@ -42,6 +42,9 @@ class Assistant(Agent):
 
                 You are curious, friendly, and have a sense of humor.
                 You can fully control the video through tools.
+
+                After executing play, pause, seek, or rewind actions, do not
+                say anything. Stay silent and wait for the user to speak next.
             """),
         )
         self._index = index
@@ -143,14 +146,14 @@ class Assistant(Agent):
         """Resume or start playing the video.
         Use when the user asks to play, resume, or start the video."""
         await self._rpc(context, "video.play")
-        return "Video is now playing."
+        return "done"
 
     @function_tool()
     async def pause_video(self, context: RunContext) -> str:
         """Pause the video.
         Use when the user asks to pause or stop the video."""
         await self._rpc(context, "video.pause")
-        return "Video paused."
+        return "done"
 
     @function_tool()
     async def set_video_timestamp(self, context: RunContext, seconds: float) -> None:
@@ -165,6 +168,7 @@ class Assistant(Agent):
             raise ToolError("Timestamp must be 0 seconds or greater.")
         context.disallow_interruptions()
         await self._rpc(context, "video.setCurrentTime", {"time": seconds})
+        return "done"
 
     @function_tool()
     async def seek_video_by(self, context: RunContext, delta: float) -> None:
@@ -179,6 +183,7 @@ class Assistant(Agent):
         """
         context.disallow_interruptions()
         await self._rpc(context, "video.seekBy", {"delta": delta})
+        return "done"
 
     @function_tool()
     async def add_video_bookmark(
@@ -226,6 +231,8 @@ async def my_agent(ctx: agents.JobContext):
     pc = Pinecone(api_key=os.environ["PINECONE_API_TOKEN"])
     index = pc.Index(host=os.environ["PINECONE_INDEX_HOST"])
 
+    SILENT_TOOLS = {"play_video", "pause_video", "set_video_timestamp", "seek_video_by"}
+
     session = AgentSession(
         stt="deepgram/nova-3:multi",
         llm="openai/gpt-4.1-mini",
@@ -237,6 +244,11 @@ async def my_agent(ctx: agents.JobContext):
         vad=silero.VAD.load(),
         turn_detection=MultilingualModel(),
     )
+
+    @session.on("function_tools_executed")
+    def _on_tools_executed(event) -> None:
+        if all(fc.name in SILENT_TOOLS for fc in event.function_calls):
+            event.cancel_tool_reply()
 
     await session.start(
         room=ctx.room,
