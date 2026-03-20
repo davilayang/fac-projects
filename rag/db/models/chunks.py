@@ -20,9 +20,7 @@ class Chunk(Base):
 
     chunk_id = Column(
         String,
-        ForeignKey(
-            "ingestion.chunk_processing_status.chunk_id", ondelete="CASCADE"
-        ),
+        ForeignKey("ingestion.chunk_processing_status.chunk_id", ondelete="CASCADE"),
         primary_key=True,
     )
     document_id = Column(

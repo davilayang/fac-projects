@@ -57,8 +57,24 @@ uv run --env-file .env poe deploy
 - **Option A:** Prefect UI at http://localhost:4200 → Deployments → select flow → Run → Quick Run
 - **Option B:** CLI (single run, bypasses the deployment):
   ```bash
+  # Arxiv ingestion: search, download, and track papers
+  uv run --env-file .env python -m flows.arxiv_search
+  
+  # Extraction: process local PDFs to markdown
   uv run --env-file .env python -m flows.extraction
   ```
+
+### Arxiv Ingestion Flow
+
+Searches arxiv for papers, downloads PDFs into `data/pdfs/<YYMM>/` subdirectories, and tracks everything in Postgres. Feeds into the extraction flow.
+
+```bash
+# Quick test (5 papers)
+uv run --env-file .env python -m flows.arxiv_search
+
+# Backfill: retry downloading pending/failed papers without re-searching
+# Set skip_search=True via the Prefect UI, or modify the __main__ block
+```
 
 ## References
 

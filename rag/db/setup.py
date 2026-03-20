@@ -46,7 +46,11 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
             dp.extracted_at AS document_extracted_at,
             e.vector,
             e.embedding_model,
-            e.embedding_model_params
+            e.embedding_model_params,
+            ap.title AS arxiv_title,
+            ap.categories AS arxiv_categories,
+            ap.primary_category AS arxiv_primary_category,
+            ap.published_at AS arxiv_published_at
         FROM ingestion.chunks c
         LEFT JOIN ingestion.chunk_processing_status cp
             ON c.chunk_id = cp.chunk_id
@@ -56,6 +60,8 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
             ON c.document_id = dm.document_id
         LEFT JOIN ingestion.embeddings e
             ON c.chunk_id = e.chunk_id
+        LEFT JOIN ingestion.arxiv_papers ap
+            ON dp.arxiv_id = ap.arxiv_id
     """
     )
 
@@ -65,7 +71,8 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
     print("Database setup complete.")
     print("  Schema: ingestion")
     print("  Tables: document_processing_status, document_metadata,")
-    print("          chunk_processing_status, chunks, embeddings")
+    print("          chunk_processing_status, chunks, embeddings,")
+    print("          arxiv_papers, search_runs, search_run_papers")
     print("  View:   chunks_full")
 
 
