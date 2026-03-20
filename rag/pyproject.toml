@@ -1,0 +1,114 @@
+[project]
+name = "rag"
+version = "0.1.0"
+description = "arXiv document ingestion, chunking, and embedding pipeline"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "prefect",
+  "beautifulsoup4",
+  "sqlalchemy",
+  "psycopg2-binary",
+  "pandas",
+  "pymupdf4llm",
+  "marker-pdf",
+  "grobid-client-python",
+]
+
+[tool.setuptools.packages.find]
+include = ["db*", "flows*"]
+
+[dependency-groups]
+dev = [
+    "poethepoet>=0.29.0,<1.0.0",
+    "black==23.7.0",
+    "mypy>=1.1.1,<2.0.0",
+    "pytest==7.4.2",
+    "pytest-cov>=4.0.0,<5.0.0",
+    "pytest-mock>=3.10.0,<4.0.0",
+    "ruff>=0.4.6,<1.0.0",
+    "ipython",
+    "jupyterlab",
+    "jupyterlab-vim",
+]
+
+# Poe the Poet (Scripting) #
+
+## Prefect ##
+
+[tool.poe.tasks.server-up]
+cmd = "docker compose up --build"
+help = "Start Prefect Server and all services"
+
+[tool.poe.tasks.server-down]
+cmd = "docker compose down"
+help = "Stop Prefect server and all services"
+
+[tool.poe.tasks.deploy]
+cmd = "python -m flows.deploy"
+help = "Register flows (DAGs) with Prefect server"
+envfile = ".env"
+
+[tool.poe.tasks.db-setup]
+cmd = "python -m db.setup"
+help = "Run setup.py to configure Prefect cluster's Postgres database for ingestions"
+envfile = ".env"
+
+## Code QA ##
+
+[tool.poe.tasks.fmt]
+cmd = "black --check flows/ db/"
+help = "Check code formatting with black (does not modify)"
+
+[tool.poe.tasks.fmt-fix]
+cmd = "black flows/ db/"
+help = "Fix code formatting issues automatically with black"
+
+[tool.poe.tasks.lint]
+cmd = "ruff check ."
+help = "Check code linting with ruff (does not modify)"
+
+[tool.poe.tasks.lint-fix]
+cmd = "ruff check --fix ."
+help = "Fix code linting issues automatically with ruff"
+
+[tool.poe.tasks.fix]
+sequence = ["fmt-fix", "lint-fix"]
+help = "Fix all issues: formatting with black and linting with ruff"
+
+[tool.poe.tasks.mypy]
+cmd = "mypy flows/ db/"
+help = "Run type checking with mypy"
+
+[tool.poe.tasks.test]
+cmd = "pytest -v"
+help = "Run tests with verbose output"
+
+[tool.poe.tasks.check]
+sequence = ["fmt", "lint", "mypy", "test"]
+help = "Run all checks: formatting, linting, type checking, and tests"
+
+## Dependency Configurations ##
+
+[tool.mypy]
+python_version = "3.13"
+explicit_package_bases = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "--pdbcls=IPython.terminal.debugger:TerminalPdb"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py313"
+lint.select = ["E", "F", "I"]
+lint.ignore = ["E501", "E402"]
+lint.unfixable = []
+line-length = 89
+
+[tool.ruff.lint.isort]
+lines-between-types = 1
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

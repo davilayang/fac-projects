@@ -1,0 +1,95 @@
+# https://docs.prefect.io/v3/how-to-guides/self-hosted/docker-compose
+
+services:
+
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: ${PREFECT_DB_USER}
+      POSTGRES_PASSWORD: ${PREFECT_DB_PASSWORD}
+      POSTGRES_DB: ${PREFECT_DB_NAME}
+    ports:
+      - "5432:5432" # Accessible from Host with localhost:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  prefect-server:
+    image: prefecthq/prefect:3-latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://${PREFECT_DB_USER}:${PREFECT_DB_PASSWORD}@postgres:5432/${PREFECT_DB_NAME}
+      PREFECT_SERVER_API_HOST: 0.0.0.0
+      PREFECT_SERVER_UI_API_URL: http://localhost:${PREFECT_UI_PORT}/api
+      PREFECT_MESSAGING_BROKER: prefect_redis.messaging
+      PREFECT_MESSAGING_CACHE: prefect_redis.messaging
+      PREFECT_REDIS_MESSAGING_HOST: redis
+      PREFECT_REDIS_MESSAGING_PORT: 6379
+      PREFECT_REDIS_MESSAGING_DB: 0
+    command: prefect server start --no-services
+    ports:
+      - "${PREFECT_UI_PORT}:4200"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:4200/api/health', timeout=1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  prefect-services:
+    image: prefecthq/prefect:3-latest
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://${PREFECT_DB_USER}:${PREFECT_DB_PASSWORD}@postgres:5432/${PREFECT_DB_NAME}
+      PREFECT_MESSAGING_BROKER: prefect_redis.messaging
+      PREFECT_MESSAGING_CACHE: prefect_redis.messaging
+      PREFECT_REDIS_MESSAGING_HOST: redis
+      PREFECT_REDIS_MESSAGING_PORT: 6379
+      PREFECT_REDIS_MESSAGING_DB: 0
+    command: prefect server services start
+
+  prefect-worker:
+    image: prefecthq/prefect:3-latest
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+    environment:
+      PREFECT_API_URL: http://prefect-server:4200/api
+      PREFECT_DB_USER: ${PREFECT_DB_USER}
+      PREFECT_DB_PASSWORD: ${PREFECT_DB_PASSWORD}
+      PREFECT_DB_NAME: ${PREFECT_DB_NAME}
+      PREFECT_DB_HOST: postgres
+    volumes:
+      - .:/app
+    working_dir: /app
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        pip install -e . --quiet &&
+        prefect work-pool create local-pool --type process 2>/dev/null || true &&
+        prefect worker start --pool local-pool
+    restart: on-failure
+
+volumes:
+  postgres_data:
+  redis_data:

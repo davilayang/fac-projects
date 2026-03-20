@@ -1,0 +1,11 @@
+# rag-specific ignores (Python basics covered by root .gitignore)
+
+# Runtime data
+data/
+logs/
+
+# Credentials
+creds
+*.pem
+k8s/secret.yaml
+k8s/secret.env

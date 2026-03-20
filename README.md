@@ -10,6 +10,7 @@ AI & LiveKit initiatives for Apolitical.
 | Project | Description | Stack |
 |---------|-------------|-------|
 | [`eva`](./eva/) | **Events Voice Agent** — LiveKit-powered voice AI for interactive event replay | Python (uv), LiveKit, Pinecone, OpenAI |
+| [`rag`](./rag/) | **RAG Ingestion Pipeline** — arXiv document ingestion, chunking, and embedding | Python (uv), Prefect, PostgreSQL, pymupdf4llm |
 
 ## Getting Started
 
