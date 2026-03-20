@@ -60,24 +60,97 @@ PINECONE_INDEX_HOST=...
 
 ### 1. Configure environment variables
 
+```bash
+cp .env.example .env  # fill in your values
+```
+
 See [Environment Variables](#environment-variables) above.
 
-### 2. Start the agent
+### 2. Tilt (recommended for local dev)
+
+[Tilt](https://tilt.dev) runs all services, streams logs in a single UI, and live-updates containers on file changes without full rebuilds.
 
 ```bash
-docker compose up --build
+# Install Tilt (macOS)
+brew install tilt
+
+# Start everything — opens the Tilt UI at http://localhost:10350
+./tilt-up.sh
+
+# Stop everything (tears down containers and releases port 10350)
+./tilt-down.sh
 ```
 
-To run in the background:
+Services available at:
+- UI: http://localhost:8080
+- Auth server: http://localhost:4000
+
+### 3. Docker Compose (all services)
 
 ```bash
-docker compose up --build -d
-```
+# Start all services (builds images if needed)
+docker compose up -d
 
-### 3. Stop the agent
+# Tail logs for all services
+docker compose logs -f
 
-```bash
+# Tail logs for one service
+docker compose logs -f auth-server
+
+# Rebuild after code changes
+docker compose up -d --build
+
+# Stop everything
 docker compose down
+
+# Stop and remove volumes (clears persisted sessions)
+docker compose down -v
+```
+
+### 4. Individual services
+
+#### Auth server
+
+```bash
+cd auth-server
+
+docker build -t auth-server .
+docker run -d -p 4000:4000 --env-file .env --name auth-server auth-server
+
+# Logs / stop
+docker logs -f auth-server
+docker rm -f auth-server
+```
+
+#### UI
+
+```bash
+cd ui
+
+# VITE_ vars are baked into the JS bundle at build time and are
+# visible in the browser — they are not server-side secrets.
+docker build \
+  --build-arg VITE_AGENT_NAME=eva \
+  -t eva-ui .
+
+docker run -d -p 8080:80 --name eva-ui eva-ui
+
+# Logs / stop
+docker logs -f eva-ui
+docker rm -f eva-ui
+```
+
+#### Voice agent
+
+```bash
+cd voice-agent
+
+docker build -t eva-voice-agent .
+docker run -d --env-file .env.local --name eva-voice-agent eva-voice-agent
+
+# Logs / stop
+docker logs -f eva-voice-agent
+docker rm -f eva-voice-agent
 ```
 
 ## Development (without Docker)
