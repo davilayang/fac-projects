@@ -20,6 +20,7 @@ from prefect import flow, task
 from prefect.artifacts import create_markdown_artifact
 from prefect.cache_policies import NO_CACHE
 from prefect.task_runners import ThreadPoolTaskRunner
+from prefect.variables import Variable
 from sqlalchemy import create_engine, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
@@ -360,11 +361,11 @@ def complete_search_run(
 
 @flow(task_runner=ThreadPoolTaskRunner(max_workers=5), log_prints=True)
 def arxiv_ingestion_flow(
-    query_string: str,
-    date_from: str,
+    query_string: str = "",
+    date_from: str = "",
     date_to: str | None = None,
     max_results: int = 500,
-    pdf_dir: str = "data/pdfs",
+    pdf_dir: str = "",
     download_limit: int | None = None,
     skip_search: bool = False,
     database_url: str = "",
@@ -375,7 +376,19 @@ def arxiv_ingestion_flow(
     Phase 2 (download): Download all pending PDFs concurrently.
 
     Set skip_search=True for backfill mode (download only).
+
+    Parameters fall back to Prefect Variables (editable in the UI):
+      arxiv-query, arxiv-date-from, arxiv-date-to, arxiv-pdf-dir
     """
+    # Resolve parameters: explicit arg > Prefect Variable > default
+    query_string = query_string or Variable.get(
+        "arxiv-query",
+        default='ti:"retrieval augmented generation" OR abs:"RAG"',
+    )
+    date_from = date_from or Variable.get("arxiv-date-from", default="2026-01-01")
+    date_to = date_to or Variable.get("arxiv-date-to", default=None)
+    pdf_dir = pdf_dir or Variable.get("arxiv-pdf-dir", default="data/pdfs")
+
     if not database_url:
         _user = os.environ["PREFECT_DB_USER"]
         _password = os.environ["PREFECT_DB_PASSWORD"]
@@ -444,9 +457,6 @@ def arxiv_ingestion_flow(
 
 
 if __name__ == "__main__":
-    arxiv_ingestion_flow(
-        query_string='ti:"retrieval augmented generation" OR abs:"RAG"',
-        date_from="2026-01-01",
-        max_results=5,
-        pdf_dir="data/pdfs",
-    )
+    # Parameters resolve from Prefect Variables if not passed here.
+    # For a quick test, override max_results:
+    arxiv_ingestion_flow(max_results=5)

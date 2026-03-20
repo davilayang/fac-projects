@@ -76,6 +76,28 @@ uv run --env-file .env python -m flows.arxiv_search
 # Set skip_search=True via the Prefect UI, or modify the __main__ block
 ```
 
+#### arXiv Search Parameters
+
+Search parameters are configured via **Prefect Variables** (UI → Variables), so you
+can change them without redeploying or editing code. Parameters passed directly to
+the flow take precedence over variables.
+
+| Variable | Default | Description |
+|---|---|---|
+| `arxiv-query` | `ti:"retrieval augmented generation" OR abs:"RAG"` | [Arxiv query syntax](https://info.arxiv.org/help/api/user-manual.html#query_details) |
+| `arxiv-date-from` | `2026-01-01` | ISO date lower bound |
+| `arxiv-date-to` | *(none)* | ISO date upper bound |
+| `arxiv-pdf-dir` | `data/pdfs` | Base directory for downloaded PDFs |
+
+Set via CLI:
+
+```bash
+prefect variable set arxiv-query 'cat:cs.CL AND abs:"transformer"'
+prefect variable set arxiv-date-from '2026-03-01'
+```
+
+Or via the Prefect UI at http://localhost:4200 → Variables.
+
 ## References
 
 - [Prefect self-hosted Docker Compose guide](https://docs.prefect.io/v3/how-to-guides/self-hosted/docker-compose)

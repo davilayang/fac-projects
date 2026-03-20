@@ -39,12 +39,8 @@ DEPLOYMENTS = [
         flow=arxiv_ingestion_flow,
         name="arxiv-search",
         entrypoint="flows/arxiv_search.py:arxiv_ingestion_flow",
-        parameters={
-            "query_string": 'ti:"retrieval augmented generation" OR abs:"RAG"',
-            "date_from": "2026-01-01",
-            "max_results": 500,
-            "pdf_dir": "data/pdfs",
-        },
+        # Parameters resolve from Prefect Variables at runtime.
+        # Override per-run via the UI or pass here for deployment defaults.
     ),
 ]
 
