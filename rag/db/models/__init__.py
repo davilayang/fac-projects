@@ -13,6 +13,12 @@ class Base(DeclarativeBase):
 
 # Import all models so Base.metadata.create_all() picks them up,
 # and so callers can do: from db.models import DocumentMetadata, Chunk, ...
+from db.models.arxiv import (  # noqa: E402, F401
+    ArxivPaper,
+    DownloadStatus,
+    SearchRun,
+    SearchRunPaper,
+)
 from db.models.chunks import Chunk, ChunkProcessingStatus  # noqa: E402, F401
 from db.models.documents import (  # noqa: E402, F401
     DocumentMetadata,

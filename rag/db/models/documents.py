@@ -15,6 +15,11 @@ class DocumentProcessingStatus(Base):
     output_file = Column(String)
     output_images = Column(String)
     extracted_at = Column(DateTime(timezone=True))
+    arxiv_id = Column(
+        String,
+        ForeignKey("ingestion.arxiv_papers.arxiv_id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
 
 class DocumentMetadata(Base):

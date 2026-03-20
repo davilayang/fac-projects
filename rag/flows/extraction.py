@@ -41,7 +41,7 @@ def scan_local_folder(raw_dir: str) -> list[Path]:
         print(f"[extraction] Raw data folder does not exist: {folder}")
         return []
 
-    pdfs = sorted(folder.glob("*.pdf"))
+    pdfs = sorted(folder.rglob("*.pdf"))
     print(f"[extraction] Found {len(pdfs)} PDF files in {folder}")
     return pdfs
 
@@ -68,8 +68,10 @@ def filter_unprocessed(engine, pdf_files: list[Path]) -> list[Path]:
 def extract_pdf_to_markdown(pdf_path: Path, output_dir: str) -> Path:
     """Extract a single PDF to markdown using pymupdf4llm."""
     out_dir = Path(output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    output_path = out_dir / f"{pdf_path.stem}.md"
+    yymm = pdf_path.parent.name
+    out_subdir = out_dir / yymm if yymm != out_dir.name else out_dir
+    out_subdir.mkdir(parents=True, exist_ok=True)
+    output_path = out_subdir / f"{pdf_path.stem}.md"
 
     print(f"[extraction] Extracting {pdf_path.name} → {output_path.name}")
     md_text = pymupdf4llm.to_markdown(str(pdf_path))
