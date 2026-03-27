@@ -20,8 +20,8 @@ help:
 	@echo "  reset      Stop all services and delete all data volumes"
 	@echo "  db-setup   Create schema, tables, and vector index"
 	@echo "  ingest     Run full pipeline: extract → chunk → embed"
-	@echo "  query      Run a test retrieval query (usage: make query Q='your question')"
-	@echo "  eval       Run all test queries and report recall@5"
+	@echo "  query      Retrieve chunks (Q='question'); add LLM=1 to generate an answer"
+	@echo "  eval       Run all test queries and report recall@5; add LLM=1 for generated answers"
 	@echo "  check      Run fmt, lint, type checks, and tests"
 	@echo ""
 
@@ -46,10 +46,10 @@ ingest:
 	$(UV_RUN) python -m flows.embedding
 
 query:
-	$(UV_RUN) python query.py $(if $(Q),--question "$(Q)",)
+	$(UV_RUN) python query.py $(if $(Q),--question "$(Q)",) $(if $(LLM),--llm,)
 
 eval:
-	$(UV_RUN) python eval.py
+	$(UV_RUN) python eval.py $(if $(LLM),--llm,)
 
 check:
 	$(UV_RUN) poe check

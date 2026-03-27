@@ -10,10 +10,13 @@
 # Usage:
 #   make eval
 
+import argparse
 import os
 
-from sqlalchemy import create_engine, text
 from openai import OpenAI
+from sqlalchemy import create_engine, text
+
+from query import generate
 
 # ---------------------------------------------------------------------------
 # Test cases
@@ -101,7 +104,7 @@ def retrieve(question: str, engine, top_k: int = TOP_K) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def run_eval():
+def run_eval(with_answers: bool = False):
     engine = get_db_engine()
 
     passed = 0
@@ -143,6 +146,11 @@ def run_eval():
         else:
             print(f"\n  FAIL — correct paper not in top {TOP_K}")
 
+        if with_answers:
+            result = generate(question, top_k=TOP_K)
+            print(f"\n  Generated answer:")
+            print(f"  {result['answer']}")
+
     print(f"\n{'=' * 70}")
     print(f"RESULT: {passed}/{total} questions retrieved the correct paper in top-{TOP_K}")
     print(f"Recall@{TOP_K}: {passed / total:.0%}")
@@ -150,4 +158,7 @@ def run_eval():
 
 
 if __name__ == "__main__":
-    run_eval()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--llm", action="store_true", help="Also generate LLM answers")
+    args = parser.parse_args()
+    run_eval(with_answers=args.llm)
