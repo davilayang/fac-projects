@@ -13,23 +13,20 @@ from .resources import ExtractionConfig
 
 logger = logging.getLogger(__name__)
 
-ASSET_OWNERS = ["team:data-eng"]
 ASSET_TAGS = {"domain": "rag"}
 
-
 @dg.asset(
-    group_name="extraction",
-    compute_kind="filesystem",
-    owners=ASSET_OWNERS,
     tags=ASSET_TAGS,
+    compute_kind="filesystem",
     description="Scan local PDF folder and identify unprocessed documents",
 )
-def pending_extractions(
+def check_pending_documents(
     context: dg.AssetExecutionContext,
     database: DatabaseResource,
     extraction_config: ExtractionConfig,
 ) -> dg.MaterializeResult:
     """Scan raw_dir for PDFs and filter out already-processed ones."""
+
     raw_dir = Path(extraction_config.raw_dir)
 
     if not raw_dir.exists():
@@ -58,15 +55,13 @@ def pending_extractions(
 
 
 @dg.asset(
-    group_name="extraction",
-    compute_kind="pymupdf",
-    deps=[pending_extractions],
-    owners=ASSET_OWNERS,
+    deps=[check_pending_documents],
     tags=ASSET_TAGS,
+    compute_kind="PYPI: pymupdf",
     description="Extract unprocessed PDFs to markdown and record metadata",
     retry_policy=dg.RetryPolicy(max_retries=2, delay=5),
 )
-def extracted_documents(
+def extract_documents(
     context: dg.AssetExecutionContext,
     database: DatabaseResource,
     extraction_config: ExtractionConfig,
@@ -133,13 +128,14 @@ def extracted_documents(
     )
 
 
-@dg.asset_check(asset=extracted_documents)
+@dg.asset_check(asset=extract_documents)
 def no_extraction_errors(
     context: dg.AssetCheckExecutionContext,
 ) -> dg.AssetCheckResult:
     """Verify the last extraction had no errors."""
+
     events = context.instance.get_latest_materialization_event(
-        extracted_documents.key
+        extract_documents.key
     )
     if events is None:
         return dg.AssetCheckResult(passed=True)
