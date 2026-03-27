@@ -49,14 +49,14 @@ cmd = "docker compose up postgres -d --wait"
 help = "Start Postgres container"
 envfile = ".env"
 
-[tool.poe.tasks.db-down]
-cmd = "docker compose down postgres"
-help = "Stop Postgres container"
+[tool.poe.tasks.db-setup]
+cmd = "python -m db.setup"
+help = "Create ingestion schema and tables in Postgres"
 envfile = ".env"
 
-[tool.poe.tasks.dev]
-sequence = ["db-up", {cmd = "dagster dev --port 3000"}]
-help = "Start Postgres and Dagster dev server (auto-reload)"
+[tool.poe.tasks.dagster]
+sequence = ["db-up", "db-setup", {cmd = "dagster dev --port 3000"}]
+help = "Start Postgres, ensure schema exists, and launch Dagster dev server"
 envfile = ".env"
 
 [tool.poe.tasks.server-up]
@@ -64,14 +64,14 @@ cmd = "docker compose up --build"
 envfile = ".env"
 help = "Start full Dagster stack (postgres, webserver, daemon, code server)"
 
+[tool.poe.tasks.db-down]
+cmd = "docker compose down postgres"
+help = "Stop Postgres container"
+envfile = ".env"
+
 [tool.poe.tasks.server-down]
 cmd = "docker compose down"
 help = "Stop all services"
-envfile = ".env"
-
-[tool.poe.tasks.db-setup]
-cmd = "python -m db.setup"
-help = "Create ingestion schema and tables in Postgres"
 envfile = ".env"
 
 [tool.poe.tasks.ingest]
