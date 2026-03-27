@@ -24,6 +24,8 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
 
     with engine.begin() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS ingestion"))
+        conn.execute(text("CREATE SCHEMA IF NOT EXISTS logs"))
+        conn.execute(text("CREATE SCHEMA IF NOT EXISTS eval"))
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
     Base.metadata.create_all(engine)
@@ -85,10 +87,11 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
         conn.execute(view_sql)
 
     print("Database setup complete.")
-    print("  Schema: ingestion")
-    print("  Tables: document_processing_status, document_metadata,")
-    print("          chunk_processing_status, chunks, embeddings")
-    print("  View:   chunks_full")
+    print("  Schema: ingestion — document_processing_status, document_metadata,")
+    print("                      chunk_processing_status, chunks, embeddings")
+    print("  View:   ingestion.chunks_full")
+    print("  Schema: logs       — queries, query_chunks, query_feedback")
+    print("  Schema: eval       — runs, query_results, retrieved_chunks")
 
 
 if __name__ == "__main__":

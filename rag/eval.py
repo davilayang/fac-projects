@@ -1,25 +1,27 @@
-# eval.py — retrieval evaluation against known test questions
+# eval.py — structured retrieval evaluation with experiment tracking
 #
-# For each question we know:
-#   - the expected answer (what a correct response should contain)
-#   - the expected source paper (which document_id must appear in top-k)
-#
-# This lets us measure retrieval quality BEFORE adding a generation step.
-# Metric: recall@k — did the right paper appear in the top k results?
+# Runs all test queries against the current system, records results to the
+# eval schema, and links each query back to logs.queries for latency data.
 #
 # Usage:
-#   make eval
+#   make eval           # retrieval scores only (recall@k, precision@k, MRR)
+#   make eval LLM=1     # also generate and store LLM answers
 
 import argparse
 import os
+import uuid
 
-from openai import OpenAI
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
-from query import generate
+from db.models.embeddings import EMBEDDING_DIM
+from db.models.eval_tracking import EvalQueryResult, EvalRetrievedChunk, EvalRun
+from flows.chunking import CHUNK_STRATEGY, MAX_TOKENS, MIN_TOKENS, OVERLAP_SENTENCES
+from flows.embedding import DEFAULT_MODEL, DEFAULT_PROVIDER
+from query import GENERATION_MODEL, generate, get_db_engine, log_query, retrieve
 
 # ---------------------------------------------------------------------------
-# Test cases
+# Test cases — ground truth for measuring retrieval and generation quality
 # ---------------------------------------------------------------------------
 
 TEST_QUERIES = [
@@ -50,53 +52,43 @@ TEST_QUERIES = [
     },
 ]
 
-TOP_K = 5  # how many results to retrieve per question
+TOP_K = 5
 
 
 # ---------------------------------------------------------------------------
-# Helpers (same as query.py)
+# System config snapshot
 # ---------------------------------------------------------------------------
 
 
-def get_db_engine():
-    url = (
-        f"postgresql://{os.environ['POSTGRES_USER']}:{os.environ['POSTGRES_PASSWORD']}"
-        f"@{os.environ.get('POSTGRES_HOST', 'localhost')}:{os.environ.get('POSTGRES_PORT', '5432')}"
-        f"/{os.environ['POSTGRES_DB']}"
-    )
-    return create_engine(url)
-
-
-def embed_question(question: str) -> list[float]:
-    client = OpenAI()
-    response = client.embeddings.create(
-        model=os.environ.get("EMBEDDING_MODEL", "text-embedding-3-small"),
-        input=question,
-    )
-    return response.data[0].embedding
-
-
-def retrieve(question: str, engine, top_k: int = TOP_K) -> list[dict]:
-    vector = embed_question(question)
-    vector_str = "[" + ",".join(str(x) for x in vector) + "]"
-
+def _get_corpus_counts(engine) -> tuple[int, int]:
+    """Return (doc_count, chunk_count) from the current DB state."""
     with engine.connect() as conn:
-        rows = conn.execute(
-            text("""
-                SELECT
-                    c.document_id,
-                    c.section_type,
-                    c.section_title,
-                    c.chunk_text,
-                    1 - (e.vector <=> CAST(:vector AS vector)) AS score
-                FROM ingestion.chunks c
-                JOIN ingestion.embeddings e ON c.chunk_id = e.chunk_id
-                ORDER BY e.vector <=> CAST(:vector AS vector)
-                LIMIT :top_k
-            """),
-            {"vector": vector_str, "top_k": top_k},
-        )
-        return [dict(r._mapping) for r in rows]
+        doc_count = conn.execute(
+            text("SELECT COUNT(*) FROM ingestion.document_processing_status")
+        ).scalar()
+        chunk_count = conn.execute(
+            text("SELECT COUNT(*) FROM ingestion.chunks")
+        ).scalar()
+    return int(doc_count), int(chunk_count)
+
+
+def _build_run_config(engine, top_k: int, with_llm: bool) -> dict:
+    """Snapshot current system configuration for the eval run record."""
+    doc_count, chunk_count = _get_corpus_counts(engine)
+    return {
+        "extraction_method": "pymupdf4llm",
+        "chunking_strategy": CHUNK_STRATEGY,
+        "chunk_max_tokens": MAX_TOKENS,
+        "chunk_min_tokens": MIN_TOKENS,
+        "overlap_sentences": OVERLAP_SENTENCES,
+        "embedding_model": os.environ.get("EMBEDDING_MODEL", DEFAULT_MODEL),
+        "embedding_dim": EMBEDDING_DIM,
+        "embedding_provider": os.environ.get("EMBEDDING_PROVIDER", DEFAULT_PROVIDER),
+        "top_k": top_k,
+        "generation_model": GENERATION_MODEL if with_llm else None,
+        "corpus_doc_count": doc_count,
+        "corpus_chunk_count": chunk_count,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -104,11 +96,26 @@ def retrieve(question: str, engine, top_k: int = TOP_K) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def run_eval(with_answers: bool = False):
+def run_eval(with_llm: bool = False, notes: str | None = None) -> None:
     engine = get_db_engine()
+    total = len(TEST_QUERIES)
+
+    # --- Create eval run record ---
+    config = _build_run_config(engine, top_k=TOP_K, with_llm=with_llm)
+    run_id = uuid.uuid4()
+    with Session(engine) as session:
+        session.add(EvalRun(run_id=run_id, notes=notes, **config))
+        session.commit()
+
+    print(f"\nEval run: {run_id}")
+    print(f"Config: chunking={config['chunking_strategy']}"
+          f"  embedding={config['embedding_model']}"
+          f"  top_k={TOP_K}"
+          f"  llm={config['generation_model'] or 'none'}")
 
     passed = 0
-    total = len(TEST_QUERIES)
+    total_precision = 0.0
+    reciprocal_ranks = []
 
     for i, test in enumerate(TEST_QUERIES, 1):
         question = test["question"]
@@ -121,12 +128,46 @@ def run_eval(with_answers: bool = False):
         print(f"Expected answer: {expected_answer}")
         print("-" * 70)
 
-        results = retrieve(question, engine, top_k=TOP_K)
+        # --- Retrieve (and optionally generate) ---
+        if with_llm:
+            result = generate(question, top_k=TOP_K, engine=engine)
+            chunks = result["sources"]
+            retrieval_ms = result["retrieval_latency_ms"]
+            generation_ms = result["generation_latency_ms"]
+            answer = result["answer"]
+        else:
+            chunks, retrieval_ms = retrieve(question, top_k=TOP_K, engine=engine)
+            generation_ms = None
+            answer = None
 
-        retrieved_papers = [r["document_id"] for r in results]
-        found = any(expected_paper in doc_id for doc_id in retrieved_papers)
+        # --- Log to logs.queries (shared operational log) ---
+        query_id = log_query(
+            engine,
+            question,
+            chunks,
+            retrieval_ms,
+            answer=answer,
+            generation_latency_ms=generation_ms,
+            source="eval",
+        )
 
-        for rank, chunk in enumerate(results, 1):
+        # --- Compute retrieval metrics ---
+        retrieved_papers = [c["document_id"] for c in chunks]
+        recall_hit = any(expected_paper in doc_id for doc_id in retrieved_papers)
+
+        expected_paper_rank = None
+        expected_paper_score = None
+        for rank, chunk in enumerate(chunks, 1):
+            if expected_paper in chunk["document_id"]:
+                if expected_paper_rank is None:
+                    expected_paper_rank = rank
+                    expected_paper_score = chunk["score"]
+
+        precision = sum(1 for doc in retrieved_papers if expected_paper in doc) / TOP_K
+        total_precision += precision
+
+        # --- Print results ---
+        for rank, chunk in enumerate(chunks, 1):
             hit = "✓" if expected_paper in chunk["document_id"] else " "
             print(
                 f"  [{hit}] rank={rank} score={chunk['score']:.4f}"
@@ -135,30 +176,69 @@ def run_eval(with_answers: bool = False):
                 f" | {chunk['section_title']}"
             )
 
-        if found:
-            rank_found = next(
-                r + 1
-                for r, doc in enumerate(retrieved_papers)
-                if expected_paper in doc
-            )
-            print(f"\n  PASS — correct paper found at rank {rank_found}")
+        if recall_hit:
+            print(f"\n  PASS — correct paper at rank {expected_paper_rank}"
+                  f"  precision@{TOP_K}={precision:.2f}"
+                  f"  retrieval={retrieval_ms:.0f}ms")
             passed += 1
+            reciprocal_ranks.append(1.0 / expected_paper_rank)
         else:
-            print(f"\n  FAIL — correct paper not in top {TOP_K}")
+            print(f"\n  FAIL — correct paper not in top {TOP_K}"
+                  f"  precision@{TOP_K}=0.00"
+                  f"  retrieval={retrieval_ms:.0f}ms")
+            reciprocal_ranks.append(0.0)
 
-        if with_answers:
-            result = generate(question, top_k=TOP_K)
-            print(f"\n  Generated answer:")
-            print(f"  {result['answer']}")
+        if with_llm and answer:
+            print(f"\n  Answer: {answer}")
+
+        # --- Write to eval schema ---
+        result_id = uuid.uuid4()
+        eval_chunks = [
+            EvalRetrievedChunk(
+                result_id=result_id,
+                rank=rank,
+                document_id=chunk["document_id"],
+                section_type=chunk.get("section_type"),
+                section_title=chunk.get("section_title"),
+                similarity_score=chunk["score"],
+                is_expected=expected_paper in chunk["document_id"],
+            )
+            for rank, chunk in enumerate(chunks, 1)
+        ]
+        with Session(engine) as session:
+            session.add(EvalQueryResult(
+                result_id=result_id,
+                run_id=run_id,
+                query_id=query_id,
+                question=question,
+                expected_paper=expected_paper,
+                expected_answer=expected_answer,
+                generated_answer=answer,
+                recall_hit=recall_hit,
+                expected_paper_rank=expected_paper_rank,
+                expected_paper_score=expected_paper_score,
+            ))
+            session.add_all(eval_chunks)
+            session.commit()
+
+    # --- Summary ---
+    recall = passed / total
+    mean_precision = total_precision / total
+    mrr = sum(reciprocal_ranks) / total
+    f1 = (2 * mean_precision * recall / (mean_precision + recall)) if (mean_precision + recall) else 0.0
 
     print(f"\n{'=' * 70}")
-    print(f"RESULT: {passed}/{total} questions retrieved the correct paper in top-{TOP_K}")
-    print(f"Recall@{TOP_K}: {passed / total:.0%}")
+    print(f"Run ID: {run_id}")
+    print(f"  Recall@{TOP_K}:    {recall:.0%}  ({passed}/{total})")
+    print(f"  Precision@{TOP_K}: {mean_precision:.2f}")
+    print(f"  F1:            {f1:.2f}")
+    print(f"  MRR:           {mrr:.2f}")
     print()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--llm", action="store_true", help="Also generate LLM answers")
+    parser.add_argument("--notes", default=None, help="Optional notes for this run")
     args = parser.parse_args()
-    run_eval(with_answers=args.llm)
+    run_eval(with_llm=args.llm, notes=args.notes)

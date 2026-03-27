@@ -19,3 +19,21 @@ from db.models.documents import (  # noqa: E402, F401
     DocumentProcessingStatus,
 )
 from db.models.embeddings import Embedding  # noqa: E402, F401
+from db.models.eval_tracking import (  # noqa: E402
+    EvalQueryResult as EvalQueryResult,
+)
+from db.models.eval_tracking import (
+    EvalRetrievedChunk as EvalRetrievedChunk,
+)
+from db.models.eval_tracking import (
+    EvalRun as EvalRun,
+)
+from db.models.query_logs import (  # noqa: E402
+    QueryChunkLog as QueryChunkLog,
+)
+from db.models.query_logs import (
+    QueryFeedback as QueryFeedback,
+)
+from db.models.query_logs import (
+    QueryLog as QueryLog,
+)
