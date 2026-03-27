@@ -9,6 +9,7 @@ from prefect import Flow
 from prefect.deployments.runner import RunnerDeployment
 from prefect.runner.storage import LocalStorage
 
+from flows.arxiv_search import arxiv_ingestion_flow
 from flows.extraction import extraction_flow
 
 # The worker container mounts the project at /app (docker-compose volume).
@@ -33,6 +34,13 @@ DEPLOYMENTS = [
             "raw_dir": "data/pdfs",
             "output_dir": "data/extracted",
         },
+    ),
+    DeploymentConfig(
+        flow=arxiv_ingestion_flow,
+        name="arxiv-search",
+        entrypoint="flows/arxiv_search.py:arxiv_ingestion_flow",
+        # Parameters resolve from Prefect Variables at runtime.
+        # Override per-run via the UI or pass here for deployment defaults.
     ),
 ]
 

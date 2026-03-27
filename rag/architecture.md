@@ -7,7 +7,7 @@
     - Get documents not processed yet, check against document processing status
     - ...
   - Define a Workflow for Chunking and Embedding, then Upsert to Vector Store
-  - (LATER) Define a Workflow to search on ArXiv and download PDF documents
+  - Define a Workflow to search on ArXiv and download PDF documents (`flows/arxiv_search.py`)
 - Postgres Database
   - Store document extraction status
   - Store documents chunks
@@ -16,11 +16,12 @@
   - Raw data for documents
   - Extracted documents in markdown format
 
-## data flow
+## Data flow
 
-Assuming raw data in local folder
+Arxiv ingestion → local folder → extraction → chunking/embedding → RAG
 
-1. PDF documents go through workflow to extract and write to local folder as markdown files
+0. Arxiv ingestion flow searches arxiv, downloads PDFs into `data/pdfs/<YYMM>/`, tracks in Postgres
+1. PDF documents go through extraction workflow to write to local folder as markdown files
    - Images?
    - Formulas?
 2. Markdown files go through workflow to chunk and embed
@@ -59,7 +60,18 @@ Tables
   - Vectors
   - Embedding Model
   - Embedding Model Params
-- PG view to combine, row grain at chunks
+- Arxiv Papers
+  - Arxiv ID (PK, clean ID without version)
+  - Title, Authors, Abstract, Categories
+  - Download Status (pending/downloading/downloaded/failed)
+  - Local PDF Path
+  - Published At, Updated At
+- Search Runs (audit log of each arxiv search execution)
+  - Query String, Date Range, Max Results
+  - Result Count, New Papers Count, Status
+- Search Run Papers (many-to-many: search run ↔ paper)
+  - Search Run ID, Arxiv ID, Rank in Run
+- PG view to combine, row grain at chunks (includes arxiv metadata via LEFT JOIN)
   - Final View table for RAG querying
 
 ## API endpoints

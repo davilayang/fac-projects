@@ -57,8 +57,46 @@ uv run --env-file .env poe deploy
 - **Option A:** Prefect UI at http://localhost:4200 → Deployments → select flow → Run → Quick Run
 - **Option B:** CLI (single run, bypasses the deployment):
   ```bash
+  # Arxiv ingestion: search, download, and track papers
+  uv run --env-file .env python -m flows.arxiv_search
+  
+  # Extraction: process local PDFs to markdown
   uv run --env-file .env python -m flows.extraction
   ```
+
+### Arxiv Ingestion Flow
+
+Searches arxiv for papers, downloads PDFs into `data/pdfs/<YYMM>/` subdirectories, and tracks everything in Postgres. Feeds into the extraction flow.
+
+```bash
+# Quick test (5 papers)
+uv run --env-file .env python -m flows.arxiv_search
+
+# Backfill: retry downloading pending/failed papers without re-searching
+# Set skip_search=True via the Prefect UI, or modify the __main__ block
+```
+
+#### arXiv Search Parameters
+
+Search parameters are configured via **Prefect Variables** (UI → Variables), so you
+can change them without redeploying or editing code. Parameters passed directly to
+the flow take precedence over variables.
+
+| Variable | Default | Description |
+|---|---|---|
+| `arxiv-query` | `ti:"retrieval augmented generation" OR abs:"RAG"` | [Arxiv query syntax](https://info.arxiv.org/help/api/user-manual.html#query_details) |
+| `arxiv-date-from` | `2026-01-01` | ISO date lower bound |
+| `arxiv-date-to` | *(none)* | ISO date upper bound |
+| `arxiv-pdf-dir` | `data/pdfs` | Base directory for downloaded PDFs |
+
+Set via CLI:
+
+```bash
+prefect variable set arxiv-query 'cat:cs.CL AND abs:"transformer"'
+prefect variable set arxiv-date-from '2026-03-01'
+```
+
+Or via the Prefect UI at http://localhost:4200 → Variables.
 
 ## References
 
