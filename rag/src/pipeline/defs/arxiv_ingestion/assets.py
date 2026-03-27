@@ -1,7 +1,9 @@
-# Dagster assets for arXiv ingestion: search → fan out downloads → summarize.
+# Dagster assets for arXiv ingestion.
 #
-# Uses a @graph_asset with DynamicOutput to fan out PDF downloads
-# across pending papers. Concurrency limited via pool config.
+# arxiv_search_results: configurable @asset — search arXiv + upsert metadata.
+#   Config is editable in the Dagster UI Launchpad.
+#
+# arxiv_downloads: @graph_asset — fan out PDF downloads via DynamicOutput.
 
 import logging
 import re
@@ -27,30 +29,40 @@ logger = logging.getLogger(__name__)
 
 ASSET_TAGS = {"domain": "rag"}
 
-DEFAULT_QUERY = 'ti:"retrieval augmented generation" OR abs:"RAG"'
-DEFAULT_DATE_FROM = "2026-01-01"
+
+class SearchConfig(dg.Config):
+    """Search parameters — editable in the Dagster UI Launchpad."""
+
+    query_string: str = 'ti:"retrieval augmented generation" OR abs:"RAG"'
+    date_from: str = "2026-01-01"
+    date_to: str = ""
+    max_results: int
 
 
 # ---------------------------------------------------------------------------
-# Ops for the ingestion graph
+# Asset: search + upsert (configurable via UI)
 # ---------------------------------------------------------------------------
 
 
-@dg.op(out={"pending": dg.DynamicOut(dict)})
-def search_and_list_pending(
-    context: dg.OpExecutionContext,
+@dg.asset(
+    tags=ASSET_TAGS,
+    compute_kind="api",
+    description="Search arXiv API and upsert paper metadata into Postgres",
+    retry_policy=dg.RetryPolicy(max_retries=3, delay=10),
+)
+def arxiv_search_results(
+    context: dg.AssetExecutionContext,
+    config: SearchConfig,
     database: DatabaseResource,
-    download_config: DownloadConfig,
-):
-    """Search arXiv, upsert metadata, then yield one DynamicOutput per pending paper."""
+) -> dg.MaterializeResult:
+    """Search arXiv, upsert results, and create an audit trail."""
     engine = database.get_engine()
 
-    query_string = DEFAULT_QUERY
-    date_from = DEFAULT_DATE_FROM
-    date_to = None
-    max_results = 500
+    query_string = config.query_string
+    date_from = config.date_from
+    date_to = config.date_to or None
+    max_results = config.max_results
 
-    # Phase 1: Search + upsert
     search_run_id = create_search_run(
         engine, query_string, date_from, date_to, max_results
     )
@@ -65,12 +77,33 @@ def search_and_list_pending(
             new_count += 1
 
     complete_search_run(engine, search_run_id, len(papers), new_count)
-    context.log.info(
-        "Search run %d complete: %d results, %d new",
-        search_run_id, len(papers), new_count,
+
+    return dg.MaterializeResult(
+        metadata={
+            "search_run_id": dg.MetadataValue.int(search_run_id),
+            "result_count": dg.MetadataValue.int(len(papers)),
+            "new_papers": dg.MetadataValue.int(new_count),
+            "query": dg.MetadataValue.text(query_string),
+        }
     )
 
-    # Phase 2: Yield pending downloads
+
+# ---------------------------------------------------------------------------
+# Ops for the download graph
+# ---------------------------------------------------------------------------
+
+
+@dg.op(
+    ins={"start": dg.In(dg.Nothing)},
+    out={"pending": dg.DynamicOut(dict)},
+)
+def list_pending_downloads(
+    context: dg.OpExecutionContext,
+    database: DatabaseResource,
+    download_config: DownloadConfig,
+):
+    """Query DB for pending downloads and yield one DynamicOutput per paper."""
+    engine = database.get_engine()
     pending = get_pending_downloads(engine, limit=download_config.download_limit)
     context.log.info("%d papers pending download", len(pending))
 
@@ -154,22 +187,23 @@ def summarize_downloads(
 
 
 # ---------------------------------------------------------------------------
-# Graph asset
+# Graph asset: downloads (depends on search)
 # ---------------------------------------------------------------------------
 
 
 @dg.graph_asset(
+    ins={"arxiv_search_results": dg.AssetIn()},
     tags=ASSET_TAGS,
-    description="Search arXiv, upsert metadata, and download pending PDFs via dynamic fanout",
+    description="Download pending PDFs via dynamic fanout",
 )
-def arxiv_ingestion():
-    """search + upsert → fan out download_single_pdf → collect → summarize."""
-    pending = search_and_list_pending()
+def arxiv_downloads(arxiv_search_results):
+    """list pending → fan out download_single_pdf → collect → summarize."""
+    pending = list_pending_downloads(start=arxiv_search_results)
     results = pending.map(download_single_pdf)
     return summarize_downloads(results.collect())
 
 
-@dg.asset_check(asset=arxiv_ingestion)
+@dg.asset_check(asset=arxiv_downloads)
 def no_stale_downloads(
     database: DatabaseResource,
 ) -> dg.AssetCheckResult:
