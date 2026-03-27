@@ -55,7 +55,11 @@ help = "Create ingestion schema and tables in Postgres"
 envfile = ".env"
 
 [tool.poe.tasks.dagster]
-sequence = ["db-up", "db-setup", {cmd = "dagster dev --port 3000"}]
+sequence = [
+  "db-up",
+  "db-setup",
+  {cmd = "dagster dev --port 3000 --verbose"}
+]
 help = "Start Postgres, ensure schema exists, and launch Dagster dev server"
 envfile = ".env"
 
