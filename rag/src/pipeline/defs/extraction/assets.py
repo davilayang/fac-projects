@@ -58,7 +58,6 @@ def list_unprocessed_pdfs(
 
 
 @dg.op(
-    tags={"dagster/concurrency_key": "pdf_extraction"},
     retry_policy=dg.RetryPolicy(max_retries=2, delay=5),
 )
 def extract_single_pdf(
