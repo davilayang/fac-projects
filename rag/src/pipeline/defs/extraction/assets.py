@@ -1,6 +1,10 @@
-# Dagster assets for PDF extraction: scan → filter → extract → record.
+# Dagster assets for PDF extraction: scan → fan out → extract → summarize.
+#
+# Uses a @graph_asset with DynamicOutput to fan out extraction
+# across unprocessed PDFs. Concurrency limited to 3 via pool config.
 
 import logging
+import re
 from pathlib import Path
 
 import dagster as dg
@@ -15,28 +19,24 @@ logger = logging.getLogger(__name__)
 
 ASSET_TAGS = {"domain": "rag"}
 
-@dg.asset(
-    tags=ASSET_TAGS,
-    compute_kind="filesystem",
-    description="Scan local PDF folder and identify unprocessed documents",
-)
-def check_pending_documents(
-    context: dg.AssetExecutionContext,
+
+# ---------------------------------------------------------------------------
+# Ops for the extraction graph
+# ---------------------------------------------------------------------------
+
+
+@dg.op(out={"pdf_paths": dg.DynamicOut(str)})
+def list_unprocessed_pdfs(
+    context: dg.OpExecutionContext,
     database: DatabaseResource,
     extraction_config: ExtractionConfig,
-) -> dg.MaterializeResult:
-    """Scan raw_dir for PDFs and filter out already-processed ones."""
-
+):
+    """Scan raw_dir, filter already-processed, yield one DynamicOutput per PDF."""
     raw_dir = Path(extraction_config.raw_dir)
 
     if not raw_dir.exists():
         context.log.warning("Raw data folder does not exist: %s", raw_dir)
-        return dg.MaterializeResult(
-            metadata={
-                "total_pdfs": dg.MetadataValue.int(0),
-                "unprocessed": dg.MetadataValue.int(0),
-            }
-        )
+        return
 
     pdf_files = sorted(raw_dir.rglob("*.pdf"))
     engine = database.get_engine()
@@ -46,86 +46,95 @@ def check_pending_documents(
         "%d unprocessed out of %d total PDFs", len(unprocessed), len(pdf_files)
     )
 
-    return dg.MaterializeResult(
-        metadata={
-            "total_pdfs": dg.MetadataValue.int(len(pdf_files)),
-            "unprocessed": dg.MetadataValue.int(len(unprocessed)),
-        }
-    )
+    seen_keys: set[str] = set()
+    for pdf_path in unprocessed:
+        key = re.sub(r"[^a-zA-Z0-9_]", "_", pdf_path.stem)
+        # Deduplicate keys that collapse to the same string
+        while key in seen_keys:
+            key += "_"
+        seen_keys.add(key)
+        yield dg.DynamicOutput(str(pdf_path), mapping_key=key, output_name="pdf_paths")
 
 
-@dg.asset(
-    deps=[check_pending_documents],
-    tags=ASSET_TAGS,
-    compute_kind="PYPI: pymupdf",
-    description="Extract unprocessed PDFs to markdown and record metadata",
+@dg.op(
+    tags={"dagster/concurrency_key": "pdf_extraction"},
     retry_policy=dg.RetryPolicy(max_retries=2, delay=5),
 )
-def extract_documents(
-    context: dg.AssetExecutionContext,
+def extract_single_pdf(
+    context: dg.OpExecutionContext,
+    pdf_path_str: str,
     database: DatabaseResource,
     extraction_config: ExtractionConfig,
-) -> dg.MaterializeResult:
-    """Extract each unprocessed PDF to markdown, extract metadata, record in DB."""
-    raw_dir = Path(extraction_config.raw_dir)
+) -> dict:
+    """Extract one PDF to markdown, extract metadata, and record in DB."""
+    pdf_path = Path(pdf_path_str)
     output_dir = extraction_config.output_dir
     engine = database.get_engine()
 
-    if not raw_dir.exists():
-        return dg.MaterializeResult(
-            metadata={"extracted": dg.MetadataValue.int(0)}
-        )
+    context.log.info("Extracting %s", pdf_path.name)
+    output_path = extract_to_markdown(pdf_path, output_dir)
+    metadata = extract_metadata(pdf_path)
+    record_extraction(engine, pdf_path, output_path, metadata)
 
-    pdf_files = sorted(raw_dir.rglob("*.pdf"))
-    unprocessed = filter_unprocessed(engine, pdf_files)
+    return {
+        "file": pdf_path.name,
+        "title": (metadata.get("title") or "")[:60],
+        "pages": metadata.get("page_count", 0),
+        "status": "ok",
+    }
 
-    if not unprocessed:
-        context.log.info("All documents already processed.")
-        return dg.MaterializeResult(
-            metadata={"extracted": dg.MetadataValue.int(0)}
-        )
 
-    extracted_count = 0
-    error_count = 0
-    details: list[dict] = []
+@dg.op
+def summarize_extractions(
+    context: dg.OpExecutionContext,
+    results: list[dict],
+) -> dg.Output[list[dict]]:
+    """Aggregate extraction results and log a summary."""
+    extracted = [r for r in results if r.get("status") == "ok"]
+    errors = [r for r in results if r.get("status") != "ok"]
 
-    for pdf_path in unprocessed:
-        try:
-            output_path = extract_to_markdown(pdf_path, output_dir)
-            metadata = extract_metadata(pdf_path)
-            record_extraction(engine, pdf_path, output_path, metadata)
-            extracted_count += 1
-            details.append(
-                {
-                    "file": pdf_path.name,
-                    "title": (metadata.get("title") or "")[:60],
-                    "pages": metadata.get("page_count", 0),
-                }
-            )
-        except Exception as exc:
-            logger.error("Failed to extract %s: %s", pdf_path.name, exc)
-            error_count += 1
-
-    # Build markdown summary
     summary_lines = [
-        f"**Extracted:** {extracted_count} documents",
-        f"**Errors:** {error_count}",
+        f"**Extracted:** {len(extracted)} documents",
+        f"**Errors:** {len(errors)}",
     ]
-    if details:
+    if extracted:
         summary_lines.append("\n| file | title | pages |")
         summary_lines.append("| --- | --- | --- |")
-        for d in details:
+        for d in extracted:
             summary_lines.append(
                 f"| `{d['file']}` | {d['title']} | {d['pages']} |"
             )
 
-    return dg.MaterializeResult(
-        metadata={
-            "extracted": dg.MetadataValue.int(extracted_count),
-            "errors": dg.MetadataValue.int(error_count),
-            "summary": dg.MetadataValue.md("\n".join(summary_lines)),
-        }
+    context.log.info(
+        "Extraction complete: %d extracted, %d errors",
+        len(extracted),
+        len(errors),
     )
+
+    return dg.Output(
+        results,
+        metadata={
+            "extracted": dg.MetadataValue.int(len(extracted)),
+            "errors": dg.MetadataValue.int(len(errors)),
+            "summary": dg.MetadataValue.md("\n".join(summary_lines)),
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# Graph asset: wires the ops together
+# ---------------------------------------------------------------------------
+
+
+@dg.graph_asset(
+    tags=ASSET_TAGS,
+    description="Extract unprocessed PDFs via dynamic fanout (max 3 concurrent)",
+)
+def extract_documents():
+    """list unprocessed → fan out extract_single_pdf → collect → summarize."""
+    pdf_paths = list_unprocessed_pdfs()
+    results = pdf_paths.map(extract_single_pdf)
+    return summarize_extractions(results.collect())
 
 
 @dg.asset_check(asset=extract_documents)
@@ -133,14 +142,16 @@ def no_extraction_errors(
     context: dg.AssetCheckExecutionContext,
 ) -> dg.AssetCheckResult:
     """Verify the last extraction had no errors."""
-
-    events = context.instance.get_latest_materialization_event(
+    event = context.instance.get_latest_materialization_event(
         extract_documents.key
     )
-    if events is None:
-        return dg.AssetCheckResult(passed=True)
+    if event is None:
+        return dg.AssetCheckResult(
+            passed=False,
+            metadata={"reason": "no materialization event found"},
+        )
 
-    metadata = events.asset_materialization.metadata  # type: ignore[union-attr]
+    metadata = event.asset_materialization.metadata  # type: ignore[union-attr]
     error_count = metadata.get("errors", dg.IntMetadataValue(0)).value
     return dg.AssetCheckResult(
         passed=error_count == 0,

@@ -24,8 +24,9 @@ def extract_to_markdown(pdf_path: Path, output_dir: str) -> Path:
 
 def extract_metadata(pdf_path: Path) -> dict:
     """Extract metadata from a PDF using pymupdf."""
-    doc = pymupdf.open(pdf_path)
-    meta = doc.metadata
+    with pymupdf.open(pdf_path) as doc:
+        meta = doc.metadata
+        page_count = doc.page_count
 
     raw_authors = meta.get("author", "")
     if raw_authors:
@@ -38,5 +39,5 @@ def extract_metadata(pdf_path: Path) -> dict:
         "document_id": pdf_path.stem,
         "title": meta.get("title", ""),
         "authors": authors,
-        "page_count": doc.page_count,
+        "page_count": page_count,
     }
