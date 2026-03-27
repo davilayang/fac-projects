@@ -5,6 +5,11 @@
 data/
 logs/
 
+# Dagster
+.dagster/
+.tmp_dagster_home_*/
+!src/pipeline/lib
+
 # Credentials
 creds
 *.pem
