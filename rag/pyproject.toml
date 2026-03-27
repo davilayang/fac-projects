@@ -1,20 +1,30 @@
 [project]
 name = "rag"
-version = "0.1.0"
+version = "0.2.0"
 description = "arXiv document ingestion, chunking, and embedding pipeline"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
   "arxiv>=2.4.1,<3.0.0",
+  "dagster>=1.12,<2.0",
+  "dagster-webserver>=1.12,<2.0",
+  "dagster-postgres>=0.28,<1.0",
   "httpx>=0.28.1,<1.0.0",
-  "prefect>=3.6.23,<4.0.0",
   "psycopg2-binary>=2.9.11,<3.0.0",
   "pymupdf4llm>=1.27.2.2,<2.0.0",
   "sqlalchemy>=2.0.48,<3.0.0",
 ]
 
-[tool.setuptools.packages.find]
-include = ["db*", "flows*"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pipeline", "db"]
+
+[tool.dagster]
+module_name = "pipeline.definitions"
+code_location_name = "pipeline"
 
 [dependency-groups]
 dev = [
@@ -28,42 +38,60 @@ dev = [
     "ipython",
     "jupyterlab",
     "jupyterlab-vim",
-    "beautifulsoup4",
-    "grobid-client-python",
-    "marker-pdf",
-    "pandas",
 ]
 
 # Poe the Poet (Scripting) #
 
-## Prefect ##
+## Dagster ##
+
+[tool.poe.tasks.db-up]
+cmd = "docker compose up postgres -d --wait"
+help = "Start Postgres container"
+envfile = ".env"
+
+[tool.poe.tasks.db-down]
+cmd = "docker compose down postgres"
+help = "Stop Postgres container"
+envfile = ".env"
+
+[tool.poe.tasks.dev]
+sequence = ["db-up", {cmd = "dagster dev --port 3000"}]
+help = "Start Postgres and Dagster dev server (auto-reload)"
+envfile = ".env"
 
 [tool.poe.tasks.server-up]
 cmd = "docker compose up --build"
-help = "Start Prefect Server and all services"
+envfile = ".env"
+help = "Start full Dagster stack (postgres, webserver, daemon, code server)"
 
 [tool.poe.tasks.server-down]
 cmd = "docker compose down"
-help = "Stop Prefect server and all services"
-
-[tool.poe.tasks.deploy]
-cmd = "python -m flows.deploy"
-help = "Register flows (DAGs) with Prefect server"
+help = "Stop all services"
 envfile = ".env"
 
 [tool.poe.tasks.db-setup]
 cmd = "python -m db.setup"
-help = "Run setup.py to configure Prefect cluster's Postgres database for ingestions"
+help = "Create ingestion schema and tables in Postgres"
+envfile = ".env"
+
+[tool.poe.tasks.ingest]
+cmd = "dagster job execute -m pipeline.definitions -j arxiv_ingestion_job"
+help = "Run arXiv ingestion job once from CLI"
+envfile = ".env"
+
+[tool.poe.tasks.extract]
+cmd = "dagster job execute -m pipeline.definitions -j extraction_job"
+help = "Run extraction job once from CLI"
 envfile = ".env"
 
 ## Code QA ##
 
 [tool.poe.tasks.fmt]
-cmd = "black --check flows/ db/"
+cmd = "black --check src/ db/"
 help = "Check code formatting with black (does not modify)"
 
 [tool.poe.tasks.fmt-fix]
-cmd = "black flows/ db/"
+cmd = "black src/ db/"
 help = "Fix code formatting issues automatically with black"
 
 [tool.poe.tasks.lint]
@@ -79,7 +107,7 @@ sequence = ["fmt-fix", "lint-fix"]
 help = "Fix all issues: formatting with black and linting with ruff"
 
 [tool.poe.tasks.mypy]
-cmd = "mypy flows/ db/"
+cmd = "mypy src/ db/"
 help = "Run type checking with mypy"
 
 [tool.poe.tasks.test]

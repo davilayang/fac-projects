@@ -1,7 +1,7 @@
-"""SQLAlchemy models for the fnc-ingestion database.
+"""SQLAlchemy models for the RAG ingestion database.
 
-All app tables live in the 'ingestion' schema to avoid collisions
-with Prefect's internal tables in the same Postgres instance.
+All app tables live in the 'ingestion' schema to keep them separate
+from Dagster's internal tables in the same Postgres instance.
 """
 
 from sqlalchemy.orm import DeclarativeBase

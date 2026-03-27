@@ -12,10 +12,12 @@ from sqlalchemy import create_engine, text
 
 from db.models import Base
 
-_user = os.environ["PREFECT_DB_USER"]
-_password = os.environ["PREFECT_DB_PASSWORD"]
-_db = os.environ["PREFECT_DB_NAME"]
-DEFAULT_DATABASE_URL = f"postgresql://{_user}:{_password}@localhost:5432/{_db}"
+_user = os.environ["DAGSTER_PG_USERNAME"]
+_password = os.environ["DAGSTER_PG_PASSWORD"]
+_host = os.environ.get("DAGSTER_PG_HOST", "localhost")
+_port = os.environ.get("DAGSTER_PG_PORT", "5432")
+_db = os.environ.get("DAGSTER_PG_DB", "dagster")
+DEFAULT_DATABASE_URL = f"postgresql://{_user}:{_password}@{_host}:{_port}/{_db}"
 
 
 def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
