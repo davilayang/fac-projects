@@ -12,10 +12,11 @@ from sqlalchemy import create_engine, text
 
 from db.models import Base
 
-_user = os.environ["PREFECT_DB_USER"]
-_password = os.environ["PREFECT_DB_PASSWORD"]
-_db = os.environ["PREFECT_DB_NAME"]
-DEFAULT_DATABASE_URL = f"postgresql://{_user}:{_password}@localhost:5432/{_db}"
+_user = os.environ["POSTGRES_USER"]
+_password = os.environ["POSTGRES_PASSWORD"]
+_db = os.environ["POSTGRES_DB"]
+_port = os.environ.get("POSTGRES_PORT", "5432")
+DEFAULT_DATABASE_URL = f"postgresql://{_user}:{_password}@localhost:{_port}/{_db}"
 
 
 def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
@@ -23,8 +24,23 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
 
     with engine.begin() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS ingestion"))
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
     Base.metadata.create_all(engine)
+
+    # HNSW index on the vector column for cosine similarity search.
+    # Built after table creation; safe to re-run (IF NOT EXISTS).
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+            CREATE INDEX IF NOT EXISTS embeddings_vector_hnsw
+            ON ingestion.embeddings
+            USING hnsw (vector vector_cosine_ops)
+            WITH (m = 16, ef_construction = 64)
+            """
+            )
+        )
 
     # Create a convenience view joining chunks with metadata and embeddings
     view_sql = text(
@@ -35,6 +51,12 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
             c.document_id,
             c.chunk_text,
             c.chunk_strategy,
+            c.section_type,
+            c.section_number,
+            c.section_title,
+            c.has_equations,
+            c.has_tables,
+            c.has_figures,
             cp.processed_at AS chunk_processed_at,
             dm.title AS document_title,
             dm.authors AS document_authors,

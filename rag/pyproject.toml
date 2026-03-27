@@ -13,6 +13,11 @@ dependencies = [
   "pymupdf4llm",
   "marker-pdf",
   "grobid-client-python",
+  "openai",
+  "tiktoken",
+  "pgvector",
+  "sentence-transformers",
+  "torch",
 ]
 
 [tool.setuptools.packages.find]

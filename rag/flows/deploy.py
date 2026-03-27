@@ -9,6 +9,8 @@ from prefect import Flow
 from prefect.deployments.runner import RunnerDeployment
 from prefect.runner.storage import LocalStorage
 
+from flows.chunking import chunking_flow
+from flows.embedding import embedding_flow
 from flows.extraction import extraction_flow
 
 # The worker container mounts the project at /app (docker-compose volume).
@@ -32,6 +34,24 @@ DEPLOYMENTS = [
         parameters={
             "raw_dir": "data/pdfs",
             "output_dir": "data/extracted",
+        },
+    ),
+    DeploymentConfig(
+        flow=chunking_flow,
+        name="chunking",
+        entrypoint="flows/chunking.py:chunking_flow",
+        parameters={
+            "extracted_dir": "data/extracted",
+        },
+    ),
+    DeploymentConfig(
+        flow=embedding_flow,
+        name="embedding",
+        entrypoint="flows/embedding.py:embedding_flow",
+        parameters={
+            "batch_size": 32,
+            "provider": "",
+            "model_name": "",
         },
     ),
 ]

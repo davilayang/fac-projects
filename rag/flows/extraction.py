@@ -79,9 +79,25 @@ def extract_pdf_to_markdown(pdf_path: Path, output_dir: str) -> Path:
     return output_path
 
 
+def _extract_abstract_from_markdown(md_path: Path) -> str | None:
+    """Parse the Abstract section from extracted markdown."""
+    import re
+
+    text = md_path.read_text(encoding="utf-8")
+    # Match heading variants: # Abstract, ## Abstract, **Abstract**, Abstract\n===
+    match = re.search(
+        r"(?:^#{1,4}\s*abstract\s*\n|^\*\*abstract\*\*\s*\n)(.*?)(?=^#{1,4}\s|\Z)",
+        text,
+        re.IGNORECASE | re.MULTILINE | re.DOTALL,
+    )
+    if match:
+        return match.group(1).strip() or None
+    return None
+
+
 @task(log_prints=True, task_run_name="metadata-{pdf_path.name}")
-def extract_metadata(pdf_path: Path) -> dict:
-    """Extract metadata from a PDF using pymupdf."""
+def extract_metadata(pdf_path: Path, output_path: Path) -> dict:
+    """Extract metadata from a PDF using pymupdf, plus abstract from markdown."""
     doc = pymupdf.open(pdf_path)
     meta = doc.metadata
 
@@ -92,11 +108,18 @@ def extract_metadata(pdf_path: Path) -> dict:
     else:
         authors = []
 
+    abstract = _extract_abstract_from_markdown(output_path)
+    if abstract:
+        print(f"[extraction] Abstract extracted ({len(abstract)} chars)")
+    else:
+        print("[extraction] No abstract found in markdown")
+
     return {
         "document_id": pdf_path.stem,
         "title": meta.get("title", ""),
         "authors": authors,
         "page_count": doc.page_count,
+        "abstract": abstract,
     }
 
 
@@ -150,11 +173,11 @@ def extraction_flow(
     # NOTE: docstring shows up in the deployment's "Description"
 
     if not database_url:
-        _user = os.environ["PREFECT_DB_USER"]
-        _password = os.environ["PREFECT_DB_PASSWORD"]
-        _host = os.environ.get("PREFECT_DB_HOST", "localhost")
-        _port = os.environ.get("PREFECT_DB_PORT", "5432")
-        _db = os.environ["PREFECT_DB_NAME"]
+        _user = os.environ["POSTGRES_USER"]
+        _password = os.environ["POSTGRES_PASSWORD"]
+        _host = os.environ.get("POSTGRES_HOST", "localhost")
+        _port = os.environ.get("POSTGRES_PORT", "5432")
+        _db = os.environ["POSTGRES_DB"]
         database_url = f"postgresql://{_user}:{_password}@{_host}:{_port}/{_db}"
 
     engine = get_db_engine(database_url)
@@ -172,7 +195,7 @@ def extraction_flow(
 
     for pdf_path in unprocessed:
         output_path = extract_pdf_to_markdown(pdf_path, output_dir)
-        metadata = extract_metadata(pdf_path)
+        metadata = extract_metadata(pdf_path, output_path)  # type: ignore[call-overload]
         record_extraction(engine, pdf_path, output_path, metadata)
 
     print(f"[extraction] Done. Processed {len(unprocessed)} documents.")

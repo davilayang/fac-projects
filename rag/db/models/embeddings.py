@@ -1,9 +1,16 @@
 """Embedding models: vector storage for chunks."""
 
-from sqlalchemy import ARRAY, Column, ForeignKey, Integer, String
+import os
+
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from db.models import Base
+
+# Dimensionality of the embedding vector. Must match the chosen model.
+# Set EMBEDDING_DIM env var before running db-setup when changing models.
+EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "768"))
 
 
 class Embedding(Base):
@@ -17,9 +24,7 @@ class Embedding(Base):
         nullable=False,
         unique=True,
     )
-    vector: Column[list[str] | None] = Column(
-        ARRAY(String)
-    )  # placeholder — swap for pgvector Vector type later
+    vector = Column(Vector(EMBEDDING_DIM), nullable=True)
     embedding_model = Column(String)
     embedding_model_params = Column(String)
 
