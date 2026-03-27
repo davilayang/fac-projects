@@ -113,7 +113,39 @@ services:
         prefect worker start --pool local-pool
     restart: on-failure
 
+  metabase:
+    image: metabase/metabase:latest
+    depends_on:
+      postgres-rag:
+        condition: service_healthy
+    ports:
+      - "3001:3000"
+    volumes:
+      - metabase_data:/metabase-data
+    environment:
+      MB_DB_TYPE: h2
+      MB_DB_FILE: /metabase-data/metabase.db
+
+  grafana:
+    image: grafana/grafana:latest
+    depends_on:
+      postgres-rag:
+        condition: service_healthy
+    ports:
+      - "3002:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
 volumes:
   postgres_data:
   postgres_rag_data:
   redis_data:
+  metabase_data:
+  grafana_data:

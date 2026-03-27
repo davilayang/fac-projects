@@ -10,18 +10,19 @@
 ENV_FILE := .env
 UV_RUN := uv run $(if $(wildcard $(ENV_FILE)),--env-file $(ENV_FILE),)
 
-.PHONY: help install up down reset db-setup ingest query eval check
+.PHONY: help install up down reset db-setup ingest query eval seed check
 
 help:
 	@echo ""
 	@echo "  install    Install Python dependencies"
-	@echo "  up         Start all services (Postgres, Redis, Prefect)"
+	@echo "  up         Start all services (Postgres, Redis, Prefect, Metabase, Grafana)"
 	@echo "  down       Stop all services, keep data"
 	@echo "  reset      Stop all services and delete all data volumes"
 	@echo "  db-setup   Create schema, tables, and vector index"
 	@echo "  ingest     Run full pipeline: extract → chunk → embed"
 	@echo "  query      Retrieve chunks (Q='question'); add LLM=1 to generate an answer"
 	@echo "  eval       Run all test queries and report recall@5; add LLM=1 for generated answers"
+	@echo "  seed       Run a batch of sample queries to populate logs for Grafana/Metabase"
 	@echo "  check      Run fmt, lint, type checks, and tests"
 	@echo ""
 
@@ -50,6 +51,9 @@ query:
 
 eval:
 	$(UV_RUN) python eval.py $(if $(LLM),--llm,)
+
+seed:
+	$(UV_RUN) python seed_queries.py
 
 check:
 	$(UV_RUN) poe check
