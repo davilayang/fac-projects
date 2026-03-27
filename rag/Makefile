@@ -10,7 +10,7 @@
 ENV_FILE := .env
 UV_RUN := uv run $(if $(wildcard $(ENV_FILE)),--env-file $(ENV_FILE),)
 
-.PHONY: help install up down reset db-setup ingest check
+.PHONY: help install up down reset db-setup ingest query eval check
 
 help:
 	@echo ""
@@ -20,6 +20,8 @@ help:
 	@echo "  reset      Stop all services and delete all data volumes"
 	@echo "  db-setup   Create schema, tables, and vector index"
 	@echo "  ingest     Run full pipeline: extract → chunk → embed"
+	@echo "  query      Run a test retrieval query (usage: make query Q='your question')"
+	@echo "  eval       Run all test queries and report recall@5"
 	@echo "  check      Run fmt, lint, type checks, and tests"
 	@echo ""
 
@@ -42,6 +44,12 @@ ingest:
 	$(UV_RUN) python -m flows.extraction
 	$(UV_RUN) python -m flows.chunking
 	$(UV_RUN) python -m flows.embedding
+
+query:
+	$(UV_RUN) python query.py $(if $(Q),--question "$(Q)",)
+
+eval:
+	$(UV_RUN) python eval.py
 
 check:
 	$(UV_RUN) poe check
