@@ -5,6 +5,7 @@
 
 import logging
 import re
+
 from pathlib import Path
 
 import dagster as dg
@@ -101,9 +102,7 @@ def summarize_extractions(
         summary_lines.append("\n| file | title | pages |")
         summary_lines.append("| --- | --- | --- |")
         for d in extracted:
-            summary_lines.append(
-                f"| `{d['file']}` | {d['title']} | {d['pages']} |"
-            )
+            summary_lines.append(f"| `{d['file']}` | {d['title']} | {d['pages']} |")
 
     context.log.info(
         "Extraction complete: %d extracted, %d errors",
@@ -126,6 +125,8 @@ def summarize_extractions(
 # ---------------------------------------------------------------------------
 
 
+# TODO: Add upstream dependency once download asset is wired in, e.g.:
+#   ins={"downloaded_pdfs": dg.AssetIn()}
 @dg.graph_asset(
     tags=ASSET_TAGS,
     description="Extract unprocessed PDFs via dynamic fanout (max 3 concurrent)",
@@ -142,9 +143,7 @@ def no_extraction_errors(
     context: dg.AssetCheckExecutionContext,
 ) -> dg.AssetCheckResult:
     """Verify the last extraction had no errors."""
-    event = context.instance.get_latest_materialization_event(
-        extract_documents.key
-    )
+    event = context.instance.get_latest_materialization_event(extract_documents.key)
     if event is None:
         return dg.AssetCheckResult(
             passed=False,

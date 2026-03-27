@@ -1,6 +1,7 @@
 # Paths and settings for the RAG ingestion pipeline.
 
 import os
+
 from pathlib import Path
 
 # Project layout

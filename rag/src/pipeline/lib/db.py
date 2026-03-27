@@ -111,9 +111,7 @@ def upsert_paper(
             arxiv_id=paper["arxiv_id"],
             rank_in_run=rank,
         )
-        link_stmt = link_stmt.on_conflict_do_nothing(
-            constraint="uq_search_run_paper"
-        )
+        link_stmt = link_stmt.on_conflict_do_nothing(constraint="uq_search_run_paper")
         session.execute(link_stmt)
 
         session.commit()
@@ -121,9 +119,7 @@ def upsert_paper(
     return is_new
 
 
-def get_pending_downloads(
-    engine: Engine, limit: int | None = None
-) -> list[dict]:
+def get_pending_downloads(engine: Engine, limit: int | None = None) -> list[dict]:
     """Get papers with pending or stale downloading status."""
     stale_threshold = datetime.now(timezone.utc) - timedelta(minutes=10)
 
@@ -178,9 +174,7 @@ def mark_download_status(
 
     with Session(engine) as session:
         session.execute(
-            update(ArxivPaper)
-            .where(ArxivPaper.arxiv_id == arxiv_id)
-            .values(**values)
+            update(ArxivPaper).where(ArxivPaper.arxiv_id == arxiv_id).values(**values)
         )
         session.commit()
 

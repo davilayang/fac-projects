@@ -1,6 +1,7 @@
 # arXiv API search logic — pure Python, no orchestration dependency.
 
 import re
+
 from datetime import datetime, timezone
 
 import arxiv
@@ -42,9 +43,7 @@ def search_arxiv(
             break
 
         if date_to:
-            date_to_dt = datetime.fromisoformat(date_to).replace(
-                tzinfo=timezone.utc
-            )
+            date_to_dt = datetime.fromisoformat(date_to).replace(tzinfo=timezone.utc)
             if result.published > date_to_dt:
                 continue
 

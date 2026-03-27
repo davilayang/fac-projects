@@ -1,6 +1,7 @@
 # Dagster assets for arXiv ingestion: search → upsert → download.
 
 import logging
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import dagster as dg
