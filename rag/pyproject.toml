@@ -68,7 +68,13 @@ help = "Run extraction job once from CLI"
 ## API ##
 
 [tool.poe.tasks.api]
-cmd = "uvicorn arxiv_rag.api.server:app --reload --reload-dir services/api/src --reload-dir packages/db/src --port 8000"
+cmd = """
+  uvicorn arxiv_rag.api.server:app
+    --reload
+    --reload-dir services/api/src
+    --reload-dir packages/db/src
+    --port 8000
+"""
 envfile = ".env"
 help = "Run the FastAPI RAG server locally with auto-reload"
 
