@@ -9,6 +9,7 @@ PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_DIR / "data"
 PDF_DIR = DATA_DIR / "pdfs"
 EXTRACTED_DIR = DATA_DIR / "extracted"
+CHUNKS_DIR = DATA_DIR / "chunks"
 
 
 def build_database_url() -> str:

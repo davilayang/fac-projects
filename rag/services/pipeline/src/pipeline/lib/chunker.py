@@ -21,9 +21,7 @@ _section_splitter = MarkdownHeaderTextSplitter(
 _nlp = spacy.blank("en")
 _nlp.add_pipe("sentencizer")
 
-_NOISE_PATTERN = re.compile(
-    r"^(references|appendix|acknowledgement)", re.IGNORECASE
-)
+_NOISE_PATTERN = re.compile(r"^(references|appendix|acknowledgement)", re.IGNORECASE)
 
 
 def _split_with_sentence_overlap(

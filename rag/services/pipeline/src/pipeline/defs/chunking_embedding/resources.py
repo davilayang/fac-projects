@@ -4,8 +4,11 @@ import os
 
 import dagster as dg
 
+from pipeline.config import CHUNKS_DIR
+
 
 class ChunkingEmbeddingConfig(dg.ConfigurableResource):
+    chunks_dir: str = str(CHUNKS_DIR)
     openai_api_key: str = os.environ.get("OPENAI_KEY", "")
     embedding_model: str = "text-embedding-3-small"
     embedding_batch_size: int = 100

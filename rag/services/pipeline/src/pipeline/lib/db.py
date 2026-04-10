@@ -2,14 +2,9 @@
 # SQLAlchemy models are imported from the existing db/ package.
 
 import re
-import uuid
 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-
-from sqlalchemy import Engine, create_engine, select, update
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.orm import Session
 
 from db.models import (
     ArxivPaper,
@@ -22,6 +17,9 @@ from db.models import (
     SearchRun,
     SearchRunPaper,
 )
+from sqlalchemy import Engine, create_engine, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.orm import Session
 
 
 def get_engine(database_url: str) -> Engine:
@@ -270,9 +268,7 @@ def get_unchunked_documents(engine: Engine) -> list[dict]:
     """
     with Session(engine) as session:
         # Subquery: document_ids that already have chunks
-        chunked_ids = (
-            select(Chunk.document_id).distinct().subquery()
-        )
+        chunked_ids = select(Chunk.document_id).distinct().subquery()
 
         stmt = (
             select(
@@ -314,6 +310,22 @@ def get_unchunked_documents(engine: Engine) -> list[dict]:
     ]
 
 
+def get_unembedded_document_ids(engine: Engine, document_ids: list[str]) -> list[str]:
+    """Return the subset of document_ids that have no chunks in the DB yet."""
+    if not document_ids:
+        return []
+
+    with Session(engine) as session:
+        stmt = (
+            select(Chunk.document_id)
+            .where(Chunk.document_id.in_(document_ids))
+            .distinct()
+        )
+        already_embedded = {row[0] for row in session.execute(stmt).all()}
+
+    return [d for d in document_ids if d not in already_embedded]
+
+
 def persist_chunks_and_embeddings(
     engine: Engine,
     document_id: str,
@@ -333,9 +345,7 @@ def persist_chunks_and_embeddings(
             chunk_id = f"{document_id}::chunk{i}"
 
             # ChunkProcessingStatus (must exist before Chunk due to FK)
-            session.merge(
-                ChunkProcessingStatus(chunk_id=chunk_id, processed_at=now)
-            )
+            session.merge(ChunkProcessingStatus(chunk_id=chunk_id, processed_at=now))
 
             session.merge(
                 Chunk(
