@@ -1,6 +1,6 @@
 # --- Dagster dev ---
 
-.PHONY: dev build up down logs tunnel
+.PHONY: dev build up down logs tunnel clean
 
 dev:  ## Launch Dagster UI at localhost:3000
 	-pkill -f dagster; uv run poe dev
@@ -28,9 +28,20 @@ logs:  ## Tail logs from all services
 tunnel:  ## SSH tunnel to remote services (dagster or all)
 	uv run poe tunnel $(or $(target),all)
 
+# --- Cleanup ---
+
+clean:  ## Remove caches, temp Dagster homes, and build artifacts
+	find . -type d -name '__pycache__' -not -path './.venv/*' -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name '.pytest_cache' -not -path './.venv/*' -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name '.mypy_cache' -not -path './.venv/*' -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name '.ruff_cache' -not -path './.venv/*' -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name '*.egg-info' -not -path './.venv/*' -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name '.tmp_dagster_home_*' -exec rm -rf {} + 2>/dev/null || true
+	@echo "Done."
+
 # --- Helpers ---
 
-.PHONY: help
+.PHONY: help clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | sort | \
