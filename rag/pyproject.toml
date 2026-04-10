@@ -47,13 +47,14 @@ envfile = ".env"
 ## Dagster ##
 
 [tool.poe.tasks.dev]
-sequence = [
-    {cmd = "docker compose up postgres pgweb -d --wait"},
-    {cmd = "python -m db.setup"},
-    {cmd = "dagster dev --port 5000 --verbose"},
-]
+shell = """
+  trap 'echo "Stopping containers..."; docker compose down' EXIT
+  docker compose up postgres pgweb -d --wait &&
+  python -m db.setup &&
+  dagster dev --port 5000 --verbose
+"""
 envfile = ".env"
-help = "Start Postgres, ensure schema, launch Dagster dev server"
+help = "Start Postgres + pgweb, ensure schema, launch Dagster dev server"
 
 [tool.poe.tasks.ingest]
 cmd = "dagster job execute -m pipeline.definitions -j arxiv_ingestion_job"
