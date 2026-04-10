@@ -41,6 +41,9 @@ dev = [
 
 # Poe the Poet (Scripting) #
 
+[tool.poe]
+envfile = ".env"
+
 ## Dagster ##
 
 [tool.poe.tasks.dev]
@@ -49,51 +52,42 @@ sequence = [
     {cmd = "python -m db.setup"},
     {cmd = "dagster dev --port 3000 --verbose"},
 ]
-envfile = ".env"
 help = "Start Postgres, ensure schema, launch Dagster dev server"
 
 [tool.poe.tasks.ingest]
 cmd = "dagster job execute -m pipeline.definitions -j arxiv_ingestion_job"
-envfile = ".env"
 help = "Run arXiv ingestion job once from CLI"
 
 [tool.poe.tasks.extract]
 cmd = "dagster job execute -m pipeline.definitions -j extraction_job"
-envfile = ".env"
 help = "Run extraction job once from CLI"
 
 ## API ##
 
 [tool.poe.tasks.api]
 cmd = "uvicorn arxiv_rag.api.server:app --reload --port 8000"
-envfile = ".env"
 help = "Run the FastAPI RAG server locally with auto-reload"
 
 [tool.poe.tasks.migrate]
 cmd = "alembic -c services/api/alembic.ini upgrade head"
-envfile = ".env"
 help = "Run database migrations"
 
 ## Docker ##
 
 [tool.poe.tasks.up]
 cmd = "docker compose up --build -d"
-envfile = ".env"
 help = "Start Dagster stack (postgres, webserver, daemon, code server)"
 
 [tool.poe.tasks.down]
 cmd = "docker compose down"
-envfile = ".env"
 help = "Stop all services"
 
 [tool.poe.tasks.up-prod]
 cmd = "docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up --build -d"
-envfile = ".env"
 help = "Start full production stack (dagster + API + nginx + certbot)"
 
 [tool.poe.tasks.down-prod]
 cmd = "docker compose -f docker-compose.yaml -f docker-compose.prod.yaml down"
-envfile = ".env"
 help = "Stop full production stack"
 
 [tool.poe.tasks.logs]
