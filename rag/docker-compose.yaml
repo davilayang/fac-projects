@@ -111,6 +111,19 @@ services:
       - dagster_network
     restart: on-failure
 
+  pgweb:
+    image: sosedoff/pgweb
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGWEB_DATABASE_URL: postgresql://${DAGSTER_PG_USERNAME}:${DAGSTER_PG_PASSWORD}@postgres:5432/${DAGSTER_PG_DB}
+    ports:
+      - "${APP_HOST:-127.0.0.1}:8081:8081"
+    networks:
+      - dagster_network
+    restart: unless-stopped
+
 networks:
   dagster_network:
     driver: bridge

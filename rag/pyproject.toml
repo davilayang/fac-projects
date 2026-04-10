@@ -118,16 +118,26 @@ help = "Deploy to remote: pull latest, rebuild & restart"
 
 [tool.poe.tasks.tunnel]
 shell = """
-  if [ "${target}" = "dagster" ] || [ "${target}" = "all" ]; then
+  if [ "${target}" = "dagster" ]; then
     echo "Dagster UI: http://localhost:5000"
     ssh -L 5000:127.0.0.1:5000 -i ${IDENTITY_FILE} ${DEPLOY_TARGET} -N
+
+  elif [ "${target}" = "pgweb" ]; then
+    echo "pgweb: http://localhost:8081"
+    ssh -L 8081:127.0.0.1:8081 -i ${IDENTITY_FILE} ${DEPLOY_TARGET} -N
+
+  elif [ "${target}" = "all" ]; then
+    echo "Dagster UI: http://localhost:5000"
+    echo "pgweb:      http://localhost:8081"
+    ssh -L 5000:127.0.0.1:5000 -L 8081:127.0.0.1:8081 -i ${IDENTITY_FILE} ${DEPLOY_TARGET} -N
+
   else
-    echo "Usage: uv run poe tunnel <dagster|all>"
+    echo "Usage: uv run poe tunnel <dagster|pgweb|all>"
     exit 1
   fi
 """
 envfile = ".env.deploy"
-help = "SSH tunnel to remote services (dagster or all)"
+help = "SSH tunnel to remote services (dagster, pgweb, or all)"
 
 [tool.poe.tasks.tunnel.args.target]
 positional = true
