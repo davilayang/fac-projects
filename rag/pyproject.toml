@@ -50,6 +50,7 @@ envfile = ".env"
 shell = """
   trap 'echo "Stopping containers..."; docker compose down' EXIT
   docker compose up postgres pgweb -d --wait &&
+  echo "pgweb: http://localhost:8081" &&
   python -m db.setup &&
   dagster dev --port 5000 --verbose
 """
