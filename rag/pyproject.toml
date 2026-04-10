@@ -48,7 +48,7 @@ envfile = ".env"
 
 [tool.poe.tasks.dev]
 sequence = [
-    {cmd = "docker compose up postgres -d --wait"},
+    {cmd = "docker compose up postgres pgweb -d --wait"},
     {cmd = "python -m db.setup"},
     {cmd = "dagster dev --port 5000 --verbose"},
 ]
