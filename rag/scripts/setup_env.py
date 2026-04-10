@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-TEMPLATE_PATH = ".env.template"
+TEMPLATE_PATH = ".env.example"
 ENV_FILE_PATH = ".env"
 
 
