@@ -42,7 +42,9 @@ def generate(request: GenerateRequest) -> StreamingResponse:
     chunks = rerank_retrieval_results(request.query, passages, top_k=request.k)
 
     if not chunks:
-        raise HTTPException(status_code=404, detail="No relevant documents found for this query.")
+        raise HTTPException(
+            status_code=404, detail="No relevant documents found for this query."
+        )
 
     return StreamingResponse(
         stream_answer(request.query, chunks, _SYSTEM_PROMPT),

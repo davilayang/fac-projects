@@ -29,8 +29,7 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
     Base.metadata.create_all(engine)
 
     # Create a convenience view joining chunks with metadata and embeddings
-    view_sql = text(
-        """
+    view_sql = text("""
         CREATE OR REPLACE VIEW ingestion.chunks_full AS
         SELECT
             c.chunk_id,
@@ -64,8 +63,7 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
             ON c.chunk_id = e.chunk_id
         LEFT JOIN ingestion.arxiv_papers ap
             ON dp.arxiv_id = ap.arxiv_id
-    """
-    )
+    """)
 
     with engine.begin() as conn:
         conn.execute(view_sql)

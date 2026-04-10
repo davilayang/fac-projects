@@ -1,5 +1,6 @@
 import logging
 import time
+
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -91,7 +92,9 @@ def retrieve_embeddings(
             "event": "retrieval",
             "query": query,
             "latency_ms": int((time.perf_counter() - start) * 1000),
-            "chunks": [{"arxiv_id": r.arxiv_id, "score": float(r.score)} for r in results],
+            "chunks": [
+                {"arxiv_id": r.arxiv_id, "score": float(r.score)} for r in results
+            ],
         },
     )
     return results

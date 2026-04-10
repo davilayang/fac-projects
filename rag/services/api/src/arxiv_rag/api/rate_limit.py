@@ -1,6 +1,8 @@
 """Simple in-memory token-bucket rate limiter — no external dependencies."""
+
 import threading
 import time
+
 from collections import defaultdict
 
 from fastapi import HTTPException, Request
@@ -17,7 +19,11 @@ _buckets: dict[str, dict] = defaultdict(
 
 def _client_ip(request: Request) -> str:
     xff = request.headers.get("x-forwarded-for", "")
-    return xff.split(",")[0].strip() if xff else (request.client.host if request.client else "unknown")
+    return (
+        xff.split(",")[0].strip()
+        if xff
+        else (request.client.host if request.client else "unknown")
+    )
 
 
 def check_rate_limit(request: Request) -> None:

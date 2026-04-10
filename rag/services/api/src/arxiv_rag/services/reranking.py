@@ -44,7 +44,9 @@ def rerank_retrieval_results(
             "event": "rerank",
             "query": query,
             "latency_ms": int((time.perf_counter() - start) * 1000),
-            "chunks": [{"arxiv_id": r.arxiv_id, "score": float(r.score)} for r in results],
+            "chunks": [
+                {"arxiv_id": r.arxiv_id, "score": float(r.score)} for r in results
+            ],
         },
     )
     return results

@@ -1,6 +1,7 @@
 import re
 
 import spacy
+
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 
 from arxiv_rag.clients import ArxivMetadata
@@ -23,7 +24,9 @@ MAX_CHUNK_CHARS = 6000
 
 
 def _is_noise_section(section: str) -> bool:
-    return bool(re.match(r"^(references|appendix|acknowledgement)", section, re.IGNORECASE))
+    return bool(
+        re.match(r"^(references|appendix|acknowledgement)", section, re.IGNORECASE)
+    )
 
 
 def _split_with_sentence_overlap(text: str, metadata: dict) -> list[dict]:
@@ -68,5 +71,7 @@ def split_into_chunks(content: str, metadata: ArxivMetadata) -> list[dict]:
             "section": section.metadata.get("section", ""),
             "subsection": section.metadata.get("subsection", ""),
         }
-        result.extend(_split_with_sentence_overlap(section.page_content, chunk_metadata))
+        result.extend(
+            _split_with_sentence_overlap(section.page_content, chunk_metadata)
+        )
     return result

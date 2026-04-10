@@ -9,6 +9,7 @@ import logging
 import re
 
 import dagster as dg
+
 from db.models import DownloadStatus
 
 from pipeline.lib.arxiv_client import search_arxiv
@@ -130,21 +131,23 @@ def download_single_pdf(
     arxiv_id = paper["arxiv_id"]
 
     mark_download_status(engine, arxiv_id, DownloadStatus.downloading)
-    target = pdf_local_path(
-        download_config.pdf_dir, arxiv_id, paper["latest_version"]
-    )
+    target = pdf_local_path(download_config.pdf_dir, arxiv_id, paper["latest_version"])
 
     try:
         download_pdf(paper["pdf_url"], target)
         mark_download_status(
-            engine, arxiv_id, DownloadStatus.downloaded,
+            engine,
+            arxiv_id,
+            DownloadStatus.downloaded,
             local_pdf_path=str(target),
         )
         context.log.info("Downloaded %s", arxiv_id)
         return {"arxiv_id": arxiv_id, "status": "ok"}
     except Exception as exc:
         mark_download_status(
-            engine, arxiv_id, DownloadStatus.failed,
+            engine,
+            arxiv_id,
+            DownloadStatus.failed,
             error=str(exc),
         )
         context.log.error("Failed to download %s: %s", arxiv_id, exc)
@@ -173,7 +176,8 @@ def summarize_downloads(
 
     context.log.info(
         "Downloads complete: %d downloaded, %d failed",
-        len(downloaded), len(failed),
+        len(downloaded),
+        len(failed),
     )
 
     return dg.Output(

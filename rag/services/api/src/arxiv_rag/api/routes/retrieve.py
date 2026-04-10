@@ -3,7 +3,11 @@ from datetime import datetime
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from arxiv_rag.services import QueryFilters, rerank_retrieval_results, retrieve_embeddings
+from arxiv_rag.services import (
+    QueryFilters,
+    rerank_retrieval_results,
+    retrieve_embeddings,
+)
 
 router = APIRouter(prefix="/retrieve", tags=["retrieve"])
 
@@ -36,9 +40,7 @@ def retrieve(
     )
     passages = retrieve_embeddings(query, top_k=k * 4, filters=filters)
     results = (
-        rerank_retrieval_results(query, passages, top_k=k)
-        if rerank
-        else passages[:k]
+        rerank_retrieval_results(query, passages, top_k=k) if rerank else passages[:k]
     )
     return [
         ChunkResponse(

@@ -37,6 +37,7 @@ def print_citations(
         print(f"     arXiv:{chunk.arxiv_id} — §{section}")
     print(_CITATION_SEP)
 
+
 _COL_WIDTHS = {
     "score": 6,
     "arxiv_id": 12,

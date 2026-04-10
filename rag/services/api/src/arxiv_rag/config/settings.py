@@ -2,6 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import pydantic
+
 from pydantic import AliasChoices, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

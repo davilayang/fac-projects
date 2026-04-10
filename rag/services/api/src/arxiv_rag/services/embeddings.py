@@ -1,4 +1,5 @@
 import logging
+
 from pathlib import Path
 
 from sqlalchemy import text
@@ -41,7 +42,9 @@ def get_documents() -> list[dict]:
             continue
         try:
             text_content = get_extracted(f)
-            documents.append({"metadata": metadata_by_id[arxiv_id], "text": text_content})
+            documents.append(
+                {"metadata": metadata_by_id[arxiv_id], "text": text_content}
+            )
         except Exception:
             logger.exception("Failed to read s3 file %s — skipping", f)
 
@@ -73,12 +76,16 @@ def build_embeddings():
     for i in range(0, len(chunks), EMBEDDING_BATCH_SIZE):
         batch = chunks[i : i + EMBEDDING_BATCH_SIZE]
         batch_num = i // EMBEDDING_BATCH_SIZE + 1
-        logger.info("Embedding batch %d/%d (%d chunks)", batch_num, total_batches, len(batch))
+        logger.info(
+            "Embedding batch %d/%d (%d chunks)", batch_num, total_batches, len(batch)
+        )
 
         try:
             embeddings = generate_embeddings([chunk["text"] for chunk in batch])
         except Exception:
-            logger.exception("Failed to generate embeddings for batch %d — aborting", batch_num)
+            logger.exception(
+                "Failed to generate embeddings for batch %d — aborting", batch_num
+            )
             raise
 
         with get_session() as session:

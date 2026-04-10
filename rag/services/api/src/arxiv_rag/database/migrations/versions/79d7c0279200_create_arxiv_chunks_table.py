@@ -9,6 +9,7 @@ Create Date: 2026-04-06 14:17:40.430175
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 from pgvector.sqlalchemy import Vector
 
@@ -23,7 +24,9 @@ def upgrade() -> None:
 
     op.create_table(
         "arxiv_chunks",
-        sa.Column("id", sa.UUID(), server_default=sa.text("gen_random_uuid()"), nullable=False),
+        sa.Column(
+            "id", sa.UUID(), server_default=sa.text("gen_random_uuid()"), nullable=False
+        ),
         sa.Column("arxiv_id", sa.Text(), nullable=False),
         sa.Column("title", sa.Text(), nullable=False),
         sa.Column("authors", sa.ARRAY(sa.Text()), nullable=True),
@@ -38,7 +41,9 @@ def upgrade() -> None:
     )
 
     op.create_index("idx_arxiv_chunks_arxiv_id", "arxiv_chunks", ["arxiv_id"])
-    op.create_index("idx_arxiv_chunks_primary_category", "arxiv_chunks", ["primary_category"])
+    op.create_index(
+        "idx_arxiv_chunks_primary_category", "arxiv_chunks", ["primary_category"]
+    )
     op.create_index("idx_arxiv_chunks_published", "arxiv_chunks", ["published"])
     op.execute(
         "CREATE INDEX idx_arxiv_chunks_embedding ON arxiv_chunks "

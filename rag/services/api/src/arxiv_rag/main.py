@@ -1,5 +1,6 @@
 import argparse
 import logging
+
 from datetime import datetime
 
 from arxiv_rag.config import get_settings
@@ -55,15 +56,21 @@ def main():
                     filters=QueryFilters(
                         author=args.author,
                         category=args.category,
-                        published_after=datetime.fromisoformat(args.published_after)
-                        if args.published_after
-                        else None,
-                        published_before=datetime.fromisoformat(args.published_before)
-                        if args.published_before
-                        else None,
+                        published_after=(
+                            datetime.fromisoformat(args.published_after)
+                            if args.published_after
+                            else None
+                        ),
+                        published_before=(
+                            datetime.fromisoformat(args.published_before)
+                            if args.published_before
+                            else None
+                        ),
                     ),
                 )
-                print_results(rerank_retrieval_results(args.query, passages, top_k=args.k))
+                print_results(
+                    rerank_retrieval_results(args.query, passages, top_k=args.k)
+                )
             else:
                 print_results(retrieve_embeddings(args.query, top_k=args.k))
             return
@@ -82,15 +89,21 @@ def main():
                 filters=QueryFilters(
                     author=args.author,
                     category=args.category,
-                    published_after=datetime.fromisoformat(args.published_after)
-                    if args.published_after
-                    else None,
-                    published_before=datetime.fromisoformat(args.published_before)
-                    if args.published_before
-                    else None,
+                    published_after=(
+                        datetime.fromisoformat(args.published_after)
+                        if args.published_after
+                        else None
+                    ),
+                    published_before=(
+                        datetime.fromisoformat(args.published_before)
+                        if args.published_before
+                        else None
+                    ),
                 ),
             )
-            reranked_chunks = rerank_retrieval_results(args.query, passages, top_k=args.k)
+            reranked_chunks = rerank_retrieval_results(
+                args.query, passages, top_k=args.k
+            )
 
             system_prompt = (
                 "You are a scientific research assistant specialising in machine learning"

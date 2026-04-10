@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+
 from collections.abc import Generator
 
 from anthropic import Anthropic
@@ -28,7 +29,9 @@ def _build_content(question: str, chunks: list[RetrievalResult]) -> list:
                     "data": chunk.text,
                 },
                 "title": chunk.title,
-                "context": (f"arXiv:{chunk.arxiv_id} | {authors} ({published}) | {chunk.section}"),
+                "context": (
+                    f"arXiv:{chunk.arxiv_id} | {authors} ({published}) | {chunk.section}"
+                ),
                 "citations": {"enabled": True},
             }
         )
@@ -36,7 +39,9 @@ def _build_content(question: str, chunks: list[RetrievalResult]) -> list:
     return content
 
 
-def generate_answer(question: str, chunks: list[RetrievalResult], system_prompt: str) -> set[int]:
+def generate_answer(
+    question: str, chunks: list[RetrievalResult], system_prompt: str
+) -> set[int]:
     """Stream the answer to stdout. Return 0-indexed document indices that were cited."""
     content = _build_content(question, chunks)
     cited_indices: set[int] = set()
@@ -58,7 +63,9 @@ def generate_answer(question: str, chunks: list[RetrievalResult], system_prompt:
                     current_block_citations.append(delta.citation)
             elif event.type == "content_block_stop":
                 if current_block_citations:
-                    block_doc_indices = sorted({c.document_index for c in current_block_citations})
+                    block_doc_indices = sorted(
+                        {c.document_index for c in current_block_citations}
+                    )
                     print(
                         "".join(f"[{i + 1}]" for i in block_doc_indices),
                         end="",
@@ -72,7 +79,6 @@ def generate_answer(question: str, chunks: list[RetrievalResult], system_prompt:
     print()
     _log_generation(question, start, final_message.usage, sorted(cited_indices))
     return cited_indices
-
 
 
 def stream_answer(
@@ -99,7 +105,9 @@ def stream_answer(
                     current_block_citations.append(delta.citation)
             elif event.type == "content_block_stop":
                 if current_block_citations:
-                    block_doc_indices = sorted({c.document_index for c in current_block_citations})
+                    block_doc_indices = sorted(
+                        {c.document_index for c in current_block_citations}
+                    )
                     markers = "".join(f"[{i + 1}]" for i in block_doc_indices)
                     yield f"data: {json.dumps({'type': 'citation', 'markers': markers})}\n\n"
                     cited_indices.update(block_doc_indices)
@@ -115,7 +123,9 @@ def stream_answer(
             "arxiv_id": chunks[i].arxiv_id,
             "title": chunks[i].title,
             "authors": chunks[i].authors,
-            "published": pub.strftime("%Y-%m") if (pub := chunks[i].published) else None,
+            "published": (
+                pub.strftime("%Y-%m") if (pub := chunks[i].published) else None
+            ),
             "section": chunks[i].section,
         }
         for i in sorted(cited_indices)

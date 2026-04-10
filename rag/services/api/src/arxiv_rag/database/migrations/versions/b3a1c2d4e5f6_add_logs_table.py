@@ -9,6 +9,7 @@ Create Date: 2026-04-08 00:00:00.000000
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
@@ -21,9 +22,7 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.create_table(
         "logs",
-        sa.Column(
-            "id", sa.BigInteger(), autoincrement=True, nullable=False
-        ),
+        sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
         sa.Column("trace_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column(
             "timestamp",

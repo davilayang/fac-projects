@@ -23,7 +23,9 @@ class PostgresHandler(logging.Handler):
             chunks = getattr(record, "chunks", None)
             cited = getattr(record, "cited", None)
             error = getattr(record, "error", None) or (
-                "".join(traceback.format_exception(*record.exc_info)) if record.exc_info else None
+                "".join(traceback.format_exception(*record.exc_info))
+                if record.exc_info
+                else None
             )
             with conn.cursor() as cur:
                 cur.execute(

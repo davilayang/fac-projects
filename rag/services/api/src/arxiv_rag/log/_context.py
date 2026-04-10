@@ -1,4 +1,5 @@
 import uuid
+
 from contextvars import ContextVar
 
 _trace_id: ContextVar[str] = ContextVar("trace_id", default="")

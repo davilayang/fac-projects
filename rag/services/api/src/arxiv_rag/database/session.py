@@ -14,7 +14,9 @@ def _get_engine():
     global _engine
     if _engine is None:
         settings = get_settings()
-        _engine = create_engine(settings.db_url, pool_pre_ping=True, echo=settings.sql_echo)
+        _engine = create_engine(
+            settings.db_url, pool_pre_ping=True, echo=settings.sql_echo
+        )
     return _engine
 
 

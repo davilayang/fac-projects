@@ -1,9 +1,11 @@
 import logging
 import secrets
+
 from pathlib import Path
 from urllib.parse import urlencode
 
 import requests as http
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -58,7 +60,9 @@ def oauth_redirect() -> RedirectResponse:
     """Initiate the GitHub OAuth flow."""
     settings = get_settings()
     state = secrets.token_urlsafe(16)
-    scope = "read:user user:email" + (" read:org" if settings.allowed_github_org else "")
+    scope = "read:user user:email" + (
+        " read:org" if settings.allowed_github_org else ""
+    )
     params = urlencode(
         {
             "client_id": settings.github_client_id,
@@ -119,7 +123,11 @@ def callback(
     emails_data = http.get(GITHUB_EMAILS_URL, headers=gh, timeout=10).json()
     verified_emails = {e["email"].lower() for e in emails_data if e.get("verified")}
     primary_email = next(
-        (e["email"].lower() for e in emails_data if e.get("primary") and e.get("verified")),
+        (
+            e["email"].lower()
+            for e in emails_data
+            if e.get("primary") and e.get("verified")
+        ),
         next(iter(verified_emails), ""),
     )
 
@@ -138,7 +146,9 @@ def callback(
 
     # Authorization: org membership
     if settings.allowed_github_org:
-        url = GITHUB_ORG_MEMBER_URL.format(org=settings.allowed_github_org, username=github_login)
+        url = GITHUB_ORG_MEMBER_URL.format(
+            org=settings.allowed_github_org, username=github_login
+        )
         member_resp = http.get(url, headers=gh, timeout=10)
         if member_resp.status_code != 204:
             logger.warning(
@@ -176,5 +186,7 @@ def me(request: Request) -> JSONResponse:
     """Return current session info for the UI header chip."""
     session = getattr(request.state, "session", None)
     if session:
-        return JSONResponse({"login": session.get("login"), "email": session.get("email", "")})
+        return JSONResponse(
+            {"login": session.get("login"), "email": session.get("email", "")}
+        )
     return JSONResponse({"login": None})
