@@ -117,7 +117,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      PGWEB_DATABASE_URL: postgresql://${DAGSTER_PG_USERNAME}:${DAGSTER_PG_PASSWORD}@postgres:5432/${DAGSTER_PG_DB}
+      PGWEB_DATABASE_URL: postgresql://${DAGSTER_PG_USERNAME}:${DAGSTER_PG_PASSWORD}@postgres:5432/${DAGSTER_PG_DB}?sslmode=disable
     ports:
       - "${APP_HOST:-127.0.0.1}:8081:8081"
     networks:
