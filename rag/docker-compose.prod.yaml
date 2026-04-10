@@ -12,11 +12,11 @@ services:
     image: rag_api
     restart: unless-stopped
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_DATABASE: ${DB_DATABASE}
+      DAGSTER_PG_HOST: postgres
+      DAGSTER_PG_PORT: 5432
+      DAGSTER_PG_USERNAME: ${DAGSTER_PG_USERNAME}
+      DAGSTER_PG_PASSWORD: ${DAGSTER_PG_PASSWORD}
+      DAGSTER_PG_DB: ${DAGSTER_PG_DB}
       OPENAI_KEY: ${OPENAI_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       HF_TOKEN: ${HF_TOKEN}

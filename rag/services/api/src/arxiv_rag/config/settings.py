@@ -1,7 +1,8 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import SecretStr
+import pydantic
+from pydantic import AliasChoices, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_DIR: Path = Path(__file__).parent.parent.parent.parent
@@ -20,12 +21,24 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr
     hf_token: SecretStr
 
-    # [Database]
-    db_database: str
-    db_host: str = "localhost"
-    db_port: int = 5050
-    db_username: str
-    db_password: SecretStr
+    # [Database] — reads DAGSTER_PG_* (shared single Postgres) with DB_* fallback
+    db_database: str = pydantic.Field(
+        validation_alias=AliasChoices("dagster_pg_db", "db_database"),
+    )
+    db_host: str = pydantic.Field(
+        default="localhost",
+        validation_alias=AliasChoices("dagster_pg_host", "db_host"),
+    )
+    db_port: int = pydantic.Field(
+        default=5432,
+        validation_alias=AliasChoices("dagster_pg_port", "db_port"),
+    )
+    db_username: str = pydantic.Field(
+        validation_alias=AliasChoices("dagster_pg_username", "db_username"),
+    )
+    db_password: SecretStr = pydantic.Field(
+        validation_alias=AliasChoices("dagster_pg_password", "db_password"),
+    )
 
     # [Defaults]
     data_dir: Path = ROOT_DIR / "data"
