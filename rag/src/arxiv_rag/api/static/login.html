@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in — arXiv RAG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #080b12;
+        --surface: #0e1320;
+        --surface2: #141928;
+        --border: #1e2a40;
+        --border2: #263047;
+        --accent: #4f8ef7;
+        --accent2: #7c3aed;
+        --glow: rgba(79, 142, 247, 0.15);
+        --text: #dde6f5;
+        --muted: #7d90ad;
+        --muted2: #9dadc4;
+        --danger: #f87171;
+        --danger-bg: rgba(248, 113, 113, 0.08);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        border-bottom: 1px solid var(--border);
+        padding: 0 32px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        background: rgba(8, 11, 18, 0.85);
+        backdrop-filter: blur(12px);
+        z-index: 100;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+      }
+
+      .logo-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+      }
+
+      .logo-name {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .logo-sub {
+        font-size: 0.68rem;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 500;
+      }
+
+      /* ── Card ── */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 48px 40px;
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        position: relative;
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        top: -80px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 500px;
+        height: 300px;
+        background: radial-gradient(
+          ellipse,
+          rgba(79, 142, 247, 0.07) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .card-icon {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+      }
+
+      .card h1 {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 1.7rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        letter-spacing: -0.02em;
+      }
+
+      .card p {
+        font-size: 0.9rem;
+        color: var(--muted2);
+        line-height: 1.65;
+        margin-bottom: 32px;
+      }
+
+      /* ── Error banner ── */
+      .error {
+        background: var(--danger-bg);
+        border: 1px solid rgba(248, 113, 113, 0.25);
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: var(--danger);
+        font-size: 0.82rem;
+        margin-bottom: 20px;
+        display: none;
+        text-align: left;
+      }
+      .error.visible {
+        display: block;
+      }
+
+      /* ── GitHub button ── */
+      .btn-github {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        padding: 13px 20px;
+        background: #fff;
+        color: #0d1117;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        text-decoration: none;
+        transition:
+          opacity 0.15s,
+          transform 0.1s;
+      }
+      .btn-github:hover {
+        opacity: 0.92;
+      }
+      .btn-github:active {
+        transform: scale(0.99);
+      }
+      .btn-github svg {
+        flex-shrink: 0;
+      }
+
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        padding: 16px;
+        font-size: 0.7rem;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">
+        <div class="logo-icon">📚</div>
+        <div class="logo-text">
+          <span class="logo-name">arXiv RAG</span>
+          <span class="logo-sub">ML Research Library</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="card-icon">🔬</div>
+      <h1>Welcome back</h1>
+      <p>Sign in with your GitHub account to access the ML research library.</p>
+
+      <div class="error" id="errorBanner"></div>
+
+      <a class="btn-github" href="/auth/oauth">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 98 96"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <title>GitHub SVG</title>
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z"
+            fill="#24292f"
+          />
+        </svg>
+        Continue with GitHub
+      </a>
+    </div>
+
+    <footer>
+      Powered by pgvector · FlashRank · Claude · arXiv open access
+    </footer>
+
+    <script>
+      const errorMap = {
+        oauth_denied: "GitHub sign-in was cancelled.",
+        state_mismatch: "Security check failed. Please try again.",
+        token_exchange_failed:
+          "Failed to complete GitHub sign-in. Please retry.",
+        not_allowed:
+          "Your GitHub account is not authorised to access this application.",
+      };
+      const err = new URLSearchParams(location.search).get("error");
+      if (err) {
+        const banner = document.getElementById("errorBanner");
+        banner.textContent = errorMap[err] || "An unexpected error occurred.";
+        banner.classList.add("visible");
+      }
+    </script>
+  </body>
+</html>
