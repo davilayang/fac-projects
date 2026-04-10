@@ -26,7 +26,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="arXiv RAG", version="0.1.0", lifespan=lifespan)
 
 # Middleware runs in LIFO order — TraceId added last = outermost (runs first).
-app.add_middleware(AuthMiddleware)
+if get_settings().github_client_id:
+    app.add_middleware(AuthMiddleware)
 app.add_middleware(TraceIdMiddleware)
 
 app.include_router(auth_routes.router)
