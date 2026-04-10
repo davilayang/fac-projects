@@ -27,13 +27,13 @@ code_location_name = "pipeline"
 
 [dependency-groups]
 dev = [
-    "poethepoet>=0.29.0,<1.0.0",
-    "black==23.7.0",
-    "mypy>=1.1.1,<2.0.0",
-    "pytest==7.4.2",
-    "pytest-cov>=4.0.0,<5.0.0",
-    "pytest-mock>=3.10.0,<4.0.0",
-    "ruff>=0.4.6,<1.0.0",
+    "poethepoet>=0.44,<1.0",
+    "black>=26.3,<27.0",
+    "mypy>=1.20,<2.0",
+    "pytest>=9.0,<10.0",
+    "pytest-cov>=7.1,<8.0",
+    "pytest-mock>=3.15,<4.0",
+    "ruff>=0.15,<1.0",
     "ipython",
     "jupyterlab",
     "jupyterlab-vim",
