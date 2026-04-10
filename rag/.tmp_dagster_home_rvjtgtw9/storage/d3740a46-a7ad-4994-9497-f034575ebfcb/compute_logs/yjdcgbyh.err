@@ -1,6 +1,0 @@
-[32m2026-03-27 16:24:43 +0000[0m - dagster - [34mDEBUG[0m - extraction_job - d3740a46-a7ad-4994-9497-f034575ebfcb - 4068 - LOGS_CAPTURED - Started capturing logs in process (pid: 4068).
-[32m2026-03-27 16:24:43 +0000[0m - dagster - [34mDEBUG[0m - extraction_job - d3740a46-a7ad-4994-9497-f034575ebfcb - 4068 - check_pending_documents - STEP_START - Started execution of step "check_pending_documents".
-[32m2026-03-27 16:24:43 +0000[0m - dagster - [34mINFO[0m - extraction_job - d3740a46-a7ad-4994-9497-f034575ebfcb - check_pending_documents - 38 unprocessed out of 38 total PDFs
-[32m2026-03-27 16:24:43 +0000[0m - dagster - [34mDEBUG[0m - extraction_job - d3740a46-a7ad-4994-9497-f034575ebfcb - 4068 - check_pending_documents - STEP_OUTPUT - Yielded output "result" of type "Any". (Type check passed).
-[32m2026-03-27 16:24:43 +0000[0m - dagster - [34mDEBUG[0m - extraction_job - d3740a46-a7ad-4994-9497-f034575ebfcb - 4068 - check_pending_documents - ASSET_MATERIALIZATION - Materialized value check_pending_documents.
-[32m2026-03-27 16:24:43 +0000[0m - dagster - [34mDEBUG[0m - extraction_job - d3740a46-a7ad-4994-9497-f034575ebfcb - 4068 - check_pending_documents - STEP_SUCCESS - Finished execution of step "check_pending_documents" in 75ms.
