@@ -5,22 +5,21 @@ description = "arXiv document ingestion, chunking, and embedding pipeline"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "arxiv>=2.4.1,<3.0.0",
-  "dagster>=1.12,<2.0",
-  "dagster-webserver>=1.12,<2.0",
-  "dagster-postgres>=0.28,<1.0",
-  "httpx>=0.28.1,<1.0.0",
-  "psycopg2-binary>=2.9.11,<3.0.0",
-  "pymupdf4llm>=1.27.2.2,<2.0.0",
-  "sqlalchemy>=2.0.48,<3.0.0",
+    "rag-db",
+    "rag-pipeline",
+    "rag-api",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.uv.sources]
+rag-db = { workspace = true }
+rag-pipeline = { workspace = true }
+rag-api = { workspace = true }
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/pipeline", "db"]
+[tool.uv.workspace]
+members = [
+    "packages/*",
+    "services/*",
+]
 
 [tool.dagster]
 module_name = "pipeline.definitions"
@@ -44,58 +43,98 @@ dev = [
 
 ## Dagster ##
 
-[tool.poe.tasks.db-up]
-cmd = "docker compose up postgres -d --wait"
-help = "Start Postgres container"
-envfile = ".env"
-
-[tool.poe.tasks.db-setup]
-cmd = "python -m db.setup"
-help = "Create ingestion schema and tables in Postgres"
-envfile = ".env"
-
-[tool.poe.tasks.dagster]
+[tool.poe.tasks.dev]
 sequence = [
-  "db-up",
-  "db-setup",
-  {cmd = "dagster dev --port 3000 --verbose"}
+    {cmd = "docker compose up postgres -d --wait"},
+    {cmd = "python -m db.setup"},
+    {cmd = "dagster dev --port 3000 --verbose"},
 ]
-help = "Start Postgres, ensure schema exists, and launch Dagster dev server"
 envfile = ".env"
-
-[tool.poe.tasks.server-up]
-cmd = "docker compose up --build"
-envfile = ".env"
-help = "Start full Dagster stack (postgres, webserver, daemon, code server)"
-
-[tool.poe.tasks.db-down]
-cmd = "docker compose down postgres"
-help = "Stop Postgres container"
-envfile = ".env"
-
-[tool.poe.tasks.server-down]
-cmd = "docker compose down"
-help = "Stop all services"
-envfile = ".env"
+help = "Start Postgres, ensure schema, launch Dagster dev server"
 
 [tool.poe.tasks.ingest]
 cmd = "dagster job execute -m pipeline.definitions -j arxiv_ingestion_job"
-help = "Run arXiv ingestion job once from CLI"
 envfile = ".env"
+help = "Run arXiv ingestion job once from CLI"
 
 [tool.poe.tasks.extract]
 cmd = "dagster job execute -m pipeline.definitions -j extraction_job"
-help = "Run extraction job once from CLI"
 envfile = ".env"
+help = "Run extraction job once from CLI"
+
+## API ##
+
+[tool.poe.tasks.api]
+cmd = "uvicorn arxiv_rag.api.server:app --reload --port 8000"
+envfile = ".env"
+help = "Run the FastAPI RAG server locally with auto-reload"
+
+[tool.poe.tasks.migrate]
+cmd = "alembic -c services/api/alembic.ini upgrade head"
+envfile = ".env"
+help = "Run database migrations"
+
+## Docker ##
+
+[tool.poe.tasks.up]
+cmd = "docker compose up --build -d"
+envfile = ".env"
+help = "Start Dagster stack (postgres, webserver, daemon, code server)"
+
+[tool.poe.tasks.down]
+cmd = "docker compose down"
+envfile = ".env"
+help = "Stop all services"
+
+[tool.poe.tasks.up-prod]
+cmd = "docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up --build -d"
+envfile = ".env"
+help = "Start full production stack (dagster + API + nginx + certbot)"
+
+[tool.poe.tasks.down-prod]
+cmd = "docker compose -f docker-compose.yaml -f docker-compose.prod.yaml down"
+envfile = ".env"
+help = "Stop full production stack"
+
+[tool.poe.tasks.logs]
+cmd = "docker compose logs -f"
+help = "Tail logs from all services"
+
+## Deploy ##
+
+[tool.poe.tasks.deploy]
+cmd = "./scripts/deploy.sh deploy"
+help = "Deploy to remote: pull latest, rebuild & restart"
+
+[tool.poe.tasks.tunnel]
+shell = """
+  if [ "${target}" = "dagster" ] || [ "${target}" = "all" ]; then
+    echo "Dagster UI: http://localhost:3000"
+    ssh -L 3000:127.0.0.1:3000 -i ${IDENTITY_FILE} ${DEPLOY_TARGET} -N
+  else
+    echo "Usage: uv run poe tunnel <dagster|all>"
+    exit 1
+  fi
+"""
+envfile = ".env.deploy"
+help = "SSH tunnel to remote services (dagster or all)"
+
+[tool.poe.tasks.tunnel.args.target]
+positional = true
+default = "all"
 
 ## Code QA ##
 
+[tool.poe.tasks.test]
+cmd = "pytest -v"
+help = "Run tests with verbose output"
+
 [tool.poe.tasks.fmt]
-cmd = "black --check src/ db/"
+cmd = "black --check packages/ services/ tests/"
 help = "Check code formatting with black (does not modify)"
 
 [tool.poe.tasks.fmt-fix]
-cmd = "black src/ db/"
+cmd = "black packages/ services/ tests/"
 help = "Fix code formatting issues automatically with black"
 
 [tool.poe.tasks.lint]
@@ -111,12 +150,8 @@ sequence = ["fmt-fix", "lint-fix"]
 help = "Fix all issues: formatting with black and linting with ruff"
 
 [tool.poe.tasks.mypy]
-cmd = "mypy src/ db/"
+cmd = "mypy packages/ services/"
 help = "Run type checking with mypy"
-
-[tool.poe.tasks.test]
-cmd = "pytest -v"
-help = "Run tests with verbose output"
 
 [tool.poe.tasks.check]
 sequence = ["fmt", "lint", "mypy", "test"]

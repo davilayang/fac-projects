@@ -1,0 +1,28 @@
+[project]
+name = "rag-pipeline"
+version = "0.2.0"
+description = "Dagster pipeline for arXiv ingestion and PDF extraction"
+requires-python = ">=3.12"
+dependencies = [
+    "rag-db",
+    "dagster>=1.12,<2.0",
+    "dagster-webserver>=1.12,<2.0",
+    "dagster-postgres>=0.28,<1.0",
+    "arxiv>=2.4.1,<3.0.0",
+    "httpx>=0.28.1,<1.0.0",
+    "pymupdf4llm>=1.27.2.2,<2.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pipeline"]
+
+[tool.uv.sources]
+rag-db = { workspace = true }
+
+[tool.dagster]
+module_name = "pipeline.definitions"
+code_location_name = "pipeline"

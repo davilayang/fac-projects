@@ -1,0 +1,39 @@
+# --- Dagster dev ---
+
+.PHONY: dev build up down logs tunnel
+
+dev:  ## Launch Dagster UI at localhost:3000
+	-pkill -f dagster; uv run poe dev
+
+# --- Docker Compose ---
+
+build:  ## Build Docker images
+	docker compose build
+
+up:  ## Start Dagster cluster (Postgres, code server, webserver, daemon)
+	docker compose up -d --build
+
+up-prod:  ## Start full production stack (dagster + API + nginx + certbot)
+	docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
+
+down:  ## Stop and remove containers
+	docker compose down
+
+down-prod:  ## Stop full production stack
+	docker compose -f docker-compose.yaml -f docker-compose.prod.yaml down
+
+logs:  ## Tail logs from all services
+	docker compose logs -f
+
+tunnel:  ## SSH tunnel to remote services (dagster or all)
+	uv run poe tunnel $(or $(target),all)
+
+# --- Helpers ---
+
+.PHONY: help
+
+help:  ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | sort | \
+	  awk 'BEGIN {FS = ":.*## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+.DEFAULT_GOAL := help
