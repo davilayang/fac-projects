@@ -50,7 +50,7 @@ envfile = ".env"
 sequence = [
     {cmd = "docker compose up postgres -d --wait"},
     {cmd = "python -m db.setup"},
-    {cmd = "dagster dev --port 3000 --verbose"},
+    {cmd = "dagster dev --port 5000 --verbose"},
 ]
 envfile = ".env"
 help = "Start Postgres, ensure schema, launch Dagster dev server"
@@ -119,8 +119,8 @@ help = "Deploy to remote: pull latest, rebuild & restart"
 [tool.poe.tasks.tunnel]
 shell = """
   if [ "${target}" = "dagster" ] || [ "${target}" = "all" ]; then
-    echo "Dagster UI: http://localhost:3000"
-    ssh -L 3000:127.0.0.1:3000 -i ${IDENTITY_FILE} ${DEPLOY_TARGET} -N
+    echo "Dagster UI: http://localhost:5000"
+    ssh -L 5000:127.0.0.1:5000 -i ${IDENTITY_FILE} ${DEPLOY_TARGET} -N
   else
     echo "Usage: uv run poe tunnel <dagster|all>"
     exit 1
