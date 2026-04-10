@@ -8,7 +8,10 @@ from arxiv_rag.services.retrieval import RetrievalResult
 
 logger = logging.getLogger(__name__)
 _settings = get_settings()
-ranker = CrossEncoder(_settings.rerank_model, cache_folder=_settings.rerank_cache_dir)
+ranker = CrossEncoder(
+    _settings.rerank_model,
+    model_kwargs={"cache_dir": _settings.rerank_cache_dir},
+)
 
 
 def rerank_retrieval_results(
