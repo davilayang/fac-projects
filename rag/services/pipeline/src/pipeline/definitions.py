@@ -4,11 +4,12 @@
 
 import dagster as dg
 
-from pipeline.defs import arxiv_ingestion, extraction
+from pipeline.defs import arxiv_ingestion, chunking_embedding, extraction
 from pipeline.resources import DatabaseResource
 
 defs = dg.Definitions.merge(
     arxiv_ingestion.defs,
     extraction.defs,
+    chunking_embedding.defs,
     dg.Definitions(resources={"database": DatabaseResource()}),
 )

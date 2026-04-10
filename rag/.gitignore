@@ -10,6 +10,9 @@ TODO.md
 ai-findings/
 ai-plannings/
 
+# Override parent gitignore: allow lib/ directories (pipeline source code)
+!**/lib/
+
 # Dagster
 .dagster/
 .tmp_dagster_home_*/

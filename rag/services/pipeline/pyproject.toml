@@ -11,6 +11,9 @@ dependencies = [
     "arxiv>=2.4,<3.0",
     "httpx>=0.28,<1.0",
     "pymupdf4llm>=1.27,<2.0",
+    "openai>=2.31,<3.0",
+    "spacy>=3.8,<4.0",
+    "langchain-text-splitters>=1.1,<2.0",
 ]
 
 [build-system]
