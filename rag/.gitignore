@@ -5,10 +5,14 @@
 data/
 logs/
 
+# Working docs
+TODO.md
+ai-findings/
+ai-plannings/
+
 # Dagster
 .dagster/
 .tmp_dagster_home_*/
-!src/pipeline/lib
 
 # Credentials
 creds

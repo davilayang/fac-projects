@@ -1,0 +1,70 @@
+# Production overlay — adds API server, nginx reverse proxy, and certbot.
+#
+# Usage:
+#   docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up --build -d
+#   (or: uv run poe up-prod)
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    image: rag_api
+    restart: unless-stopped
+    environment:
+      DAGSTER_PG_HOST: postgres
+      DAGSTER_PG_PORT: 5432
+      DAGSTER_PG_USERNAME: ${DAGSTER_PG_USERNAME}
+      DAGSTER_PG_PASSWORD: ${DAGSTER_PG_PASSWORD}
+      DAGSTER_PG_DB: ${DAGSTER_PG_DB}
+      OPENAI_KEY: ${OPENAI_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      HF_TOKEN: ${HF_TOKEN}
+      RERANK_CACHE_DIR: /opt/models
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SQL_ECHO: ${SQL_ECHO:-false}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
+      ALLOWED_GITHUB_ORG: ${ALLOWED_GITHUB_ORG:-}
+      COOKIE_SECURE: "true"
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-vertuvian}
+    volumes:
+      - rerank_models:/opt/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dagster_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: arxiv-rag-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      - api
+    networks:
+      - dagster_network
+
+  certbot:
+    image: certbot/certbot
+    container_name: arxiv-rag-certbot
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done'"
+
+volumes:
+  certbot_conf:
+  certbot_www:
+  rerank_models:
