@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Download reranker model at build time so first request isn't slow.
 RUN /app/.venv/bin/python -c \
-    "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/ms-marco-MiniLM-L-12-v2', cache_folder='/opt/models')"
+    "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/ms-marco-MiniLM-L-12-v2', cache_dir='/opt/models')"
 
 # Copy actual source
 COPY packages/db/src/ packages/db/src/
