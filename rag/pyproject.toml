@@ -76,7 +76,7 @@ cmd = """
     --port 8000
 """
 envfile = ".env"
-help = "Run the FastAPI RAG server locally with auto-reload"
+help = "Run the FastAPI RAG frontend service locally with auto-reload"
 
 [tool.poe.tasks.migrate]
 cmd = "alembic -c services/api/alembic.ini upgrade head"
