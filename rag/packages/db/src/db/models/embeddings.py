@@ -8,13 +8,13 @@ from db.models import Base
 
 
 class Embedding(Base):
-    __tablename__ = "embeddings"
+    __tablename__ = "arxiv_embeddings"
     __table_args__ = {"schema": "ingestion"}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     chunk_id = Column(
         String,
-        ForeignKey("ingestion.chunks.chunk_id", ondelete="CASCADE"),
+        ForeignKey("ingestion.arxiv_chunks.chunk_id", ondelete="CASCADE"),
         nullable=False,
         unique=True,
     )

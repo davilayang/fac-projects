@@ -12,8 +12,8 @@ def extract_to_markdown(pdf_path: Path, output_dir: str) -> Path:
     Preserves YYMM directory structure from the source path.
     """
     out_dir = Path(output_dir)
-    yymm = pdf_path.parent.name
-    out_subdir = out_dir / yymm if yymm != out_dir.name else out_dir
+    yymm = pdf_path.stem[:4]
+    out_subdir = out_dir / yymm
     out_subdir.mkdir(parents=True, exist_ok=True)
     output_path = out_subdir / f"{pdf_path.stem}.md"
 

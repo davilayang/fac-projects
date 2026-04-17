@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 # Project layout
-PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
 DATA_DIR = PROJECT_DIR / "data"
 PDF_DIR = DATA_DIR / "pdfs"
 EXTRACTED_DIR = DATA_DIR / "extracted"

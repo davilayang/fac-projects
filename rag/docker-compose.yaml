@@ -13,7 +13,7 @@
 
 services:
   postgres:
-    image: postgres:14
+    image: pgvector/pgvector:pg14
     environment:
       POSTGRES_USER: ${DAGSTER_PG_USERNAME}
       POSTGRES_PASSWORD: ${DAGSTER_PG_PASSWORD}

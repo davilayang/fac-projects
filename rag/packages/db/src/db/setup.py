@@ -24,6 +24,7 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
     engine = create_engine(database_url)
 
     with engine.begin() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS ingestion"))
 
     Base.metadata.create_all(engine)
@@ -52,14 +53,14 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
             ap.categories AS arxiv_categories,
             ap.primary_category AS arxiv_primary_category,
             ap.published_at AS arxiv_published_at
-        FROM ingestion.chunks c
-        LEFT JOIN ingestion.chunk_processing_status cp
+        FROM ingestion.arxiv_chunks c
+        LEFT JOIN ingestion.arxiv_chunk_status cp
             ON c.chunk_id = cp.chunk_id
-        LEFT JOIN ingestion.document_processing_status dp
+        LEFT JOIN ingestion.arxiv_document_status dp
             ON c.document_id = dp.document_id
-        LEFT JOIN ingestion.document_metadata dm
+        LEFT JOIN ingestion.arxiv_document_metadata dm
             ON c.document_id = dm.document_id
-        LEFT JOIN ingestion.embeddings e
+        LEFT JOIN ingestion.arxiv_embeddings e
             ON c.chunk_id = e.chunk_id
         LEFT JOIN ingestion.arxiv_papers ap
             ON dp.arxiv_id = ap.arxiv_id
@@ -70,9 +71,9 @@ def setup_database(database_url: str = DEFAULT_DATABASE_URL) -> None:
 
     print("Database setup complete.")
     print("  Schema: ingestion")
-    print("  Tables: document_processing_status, document_metadata,")
-    print("          chunk_processing_status, chunks, embeddings,")
-    print("          arxiv_papers, search_runs, search_run_papers")
+    print("  Tables: arxiv_papers, arxiv_search_runs, arxiv_search_run_papers,")
+    print("          arxiv_document_status, arxiv_document_metadata,")
+    print("          arxiv_chunks, arxiv_chunk_status, arxiv_embeddings")
     print("  View:   chunks_full")
 
 

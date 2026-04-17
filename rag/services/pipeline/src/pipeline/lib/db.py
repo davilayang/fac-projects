@@ -238,9 +238,15 @@ def record_extraction(
     with Session(engine) as session:
         # Derive arxiv_id by stripping version suffix (e.g. 2602.03300v1 → 2602.03300)
         arxiv_id = re.sub(r"v\d+$", "", pdf_path.stem)
+
+        # Only set FK if the paper exists in arxiv_papers
+        paper_exists = session.execute(
+            select(ArxivPaper.arxiv_id).where(ArxivPaper.arxiv_id == arxiv_id)
+        ).first()
+
         status_record = DocumentProcessingStatus(
             document_id=pdf_path.stem,
-            arxiv_id=arxiv_id,
+            arxiv_id=arxiv_id if paper_exists else None,
             source_file=str(pdf_path),
             output_file=str(output_path),
             extracted_at=datetime.now(timezone.utc),

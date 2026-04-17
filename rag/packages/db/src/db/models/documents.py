@@ -7,7 +7,7 @@ from db.models import Base
 
 
 class DocumentProcessingStatus(Base):
-    __tablename__ = "document_processing_status"
+    __tablename__ = "arxiv_document_status"
     __table_args__ = {"schema": "ingestion"}
 
     document_id = Column(String, primary_key=True)
@@ -23,13 +23,13 @@ class DocumentProcessingStatus(Base):
 
 
 class DocumentMetadata(Base):
-    __tablename__ = "document_metadata"
+    __tablename__ = "arxiv_document_metadata"
     __table_args__ = {"schema": "ingestion"}
 
     document_id = Column(
         String,
         ForeignKey(
-            "ingestion.document_processing_status.document_id",
+            "ingestion.arxiv_document_status.document_id",
             ondelete="CASCADE",
         ),
         primary_key=True,
