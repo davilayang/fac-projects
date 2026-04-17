@@ -47,13 +47,15 @@ envfile = ".env"
 ## Dagster ##
 
 [tool.poe.tasks.dev]
-sequence = [
-    {cmd = "docker compose up postgres -d --wait"},
-    {cmd = "python -m db.setup"},
-    {cmd = "dagster dev --port 3000 --verbose"},
-]
+shell = """
+  trap 'echo "Stopping containers..."; docker compose down' EXIT
+  docker compose up postgres pgweb -d --wait &&
+  echo "pgweb: http://localhost:8081" &&
+  python -m db.setup &&
+  dagster dev --port 5000 --verbose
+"""
 envfile = ".env"
-help = "Start Postgres, ensure schema, launch Dagster dev server"
+help = "Start Postgres + pgweb, ensure schema, launch Dagster dev server"
 
 [tool.poe.tasks.ingest]
 cmd = "dagster job execute -m pipeline.definitions -j arxiv_ingestion_job"
@@ -64,6 +66,11 @@ help = "Run arXiv ingestion job once from CLI"
 cmd = "dagster job execute -m pipeline.definitions -j extraction_job"
 envfile = ".env"
 help = "Run extraction job once from CLI"
+
+[tool.poe.tasks.chunk-embed]
+cmd = "dagster job execute -m pipeline.definitions -j chunking_embedding_job"
+envfile = ".env"
+help = "Run chunking and embedding job once from CLI"
 
 ## API ##
 
@@ -76,7 +83,7 @@ cmd = """
     --port 8000
 """
 envfile = ".env"
-help = "Run the FastAPI RAG server locally with auto-reload"
+help = "Run the FastAPI RAG frontend service locally with auto-reload"
 
 [tool.poe.tasks.migrate]
 cmd = "alembic -c services/api/alembic.ini upgrade head"
@@ -113,16 +120,26 @@ help = "Deploy to remote: pull latest, rebuild & restart"
 
 [tool.poe.tasks.tunnel]
 shell = """
-  if [ "${target}" = "dagster" ] || [ "${target}" = "all" ]; then
-    echo "Dagster UI: http://localhost:3000"
-    ssh -L 3000:127.0.0.1:3000 -i ${IDENTITY_FILE} ${DEPLOY_TARGET} -N
+  if [ "${target}" = "dagster" ]; then
+    echo "Dagster UI: http://localhost:5000"
+    ssh -L 5000:127.0.0.1:5000 -i ${IDENTITY_FILE} ${DEPLOY_TARGET} -N
+
+  elif [ "${target}" = "pgweb" ]; then
+    echo "pgweb: http://localhost:8081"
+    ssh -L 8081:127.0.0.1:8081 -i ${IDENTITY_FILE} ${DEPLOY_TARGET} -N
+
+  elif [ "${target}" = "all" ]; then
+    echo "Dagster UI: http://localhost:5000"
+    echo "pgweb:      http://localhost:8081"
+    ssh -L 5000:127.0.0.1:5000 -L 8081:127.0.0.1:8081 -i ${IDENTITY_FILE} ${DEPLOY_TARGET} -N
+
   else
-    echo "Usage: uv run poe tunnel <dagster|all>"
+    echo "Usage: uv run poe tunnel <dagster|pgweb|all>"
     exit 1
   fi
 """
 envfile = ".env.deploy"
-help = "SSH tunnel to remote services (dagster or all)"
+help = "SSH tunnel to remote services (dagster, pgweb, or all)"
 
 [tool.poe.tasks.tunnel.args.target]
 positional = true

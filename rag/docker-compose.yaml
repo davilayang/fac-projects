@@ -4,7 +4,7 @@
 #   docker compose up
 #   docker compose down --volumes
 #
-# UI:  http://localhost:3000
+# UI:  http://localhost:5000
 #
 # Code changes require a restart:
 #   docker compose restart dagster-code
@@ -13,7 +13,7 @@
 
 services:
   postgres:
-    image: postgres:14
+    image: pgvector/pgvector:pg14
     environment:
       POSTGRES_USER: ${DAGSTER_PG_USERNAME}
       POSTGRES_PASSWORD: ${DAGSTER_PG_PASSWORD}
@@ -67,7 +67,7 @@ services:
       - -h
       - "0.0.0.0"
       - -p
-      - "3000"
+      - "5000"
       - -w
       - /opt/dagster/home/workspace.yaml
     depends_on:
@@ -82,7 +82,7 @@ services:
       DAGSTER_PG_PASSWORD: ${DAGSTER_PG_PASSWORD}
       DAGSTER_PG_DB: ${DAGSTER_PG_DB}
     ports:
-      - "${APP_HOST:-127.0.0.1}:3000:3000"
+      - "${APP_HOST:-127.0.0.1}:5000:5000"
     networks:
       - dagster_network
     restart: unless-stopped
@@ -110,6 +110,19 @@ services:
     networks:
       - dagster_network
     restart: on-failure
+
+  pgweb:
+    image: sosedoff/pgweb
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGWEB_DATABASE_URL: postgresql://${DAGSTER_PG_USERNAME}:${DAGSTER_PG_PASSWORD}@postgres:5432/${DAGSTER_PG_DB}?sslmode=disable
+    ports:
+      - "${APP_HOST:-127.0.0.1}:8081:8081"
+    networks:
+      - dagster_network
+    restart: unless-stopped
 
 networks:
   dagster_network:

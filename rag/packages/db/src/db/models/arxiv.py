@@ -75,7 +75,7 @@ class ArxivPaper(Base):
 
 
 class SearchRun(Base):
-    __tablename__ = "search_runs"
+    __tablename__ = "arxiv_search_runs"
     __table_args__ = {"schema": "ingestion"}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -101,7 +101,7 @@ class SearchRun(Base):
 
 
 class SearchRunPaper(Base):
-    __tablename__ = "search_run_papers"
+    __tablename__ = "arxiv_search_run_papers"
     __table_args__ = (
         UniqueConstraint("search_run_id", "arxiv_id", name="uq_search_run_paper"),
         {"schema": "ingestion"},
@@ -110,7 +110,7 @@ class SearchRunPaper(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     search_run_id = Column(
         Integer,
-        ForeignKey("ingestion.search_runs.id", ondelete="CASCADE"),
+        ForeignKey("ingestion.arxiv_search_runs.id", ondelete="CASCADE"),
         nullable=False,
     )
     arxiv_id = Column(

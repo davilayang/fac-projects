@@ -7,7 +7,7 @@ from db.models import Base
 
 
 class ChunkProcessingStatus(Base):
-    __tablename__ = "chunk_processing_status"
+    __tablename__ = "arxiv_chunk_status"
     __table_args__ = {"schema": "ingestion"}
 
     chunk_id = Column(String, primary_key=True)
@@ -15,18 +15,18 @@ class ChunkProcessingStatus(Base):
 
 
 class Chunk(Base):
-    __tablename__ = "chunks"
+    __tablename__ = "arxiv_chunks"
     __table_args__ = {"schema": "ingestion"}
 
     chunk_id = Column(
         String,
-        ForeignKey("ingestion.chunk_processing_status.chunk_id", ondelete="CASCADE"),
+        ForeignKey("ingestion.arxiv_chunk_status.chunk_id", ondelete="CASCADE"),
         primary_key=True,
     )
     document_id = Column(
         String,
         ForeignKey(
-            "ingestion.document_processing_status.document_id",
+            "ingestion.arxiv_document_status.document_id",
             ondelete="CASCADE",
         ),
         nullable=False,

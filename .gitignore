@@ -20,7 +20,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+eva/lib/
 lib64/
 parts/
 sdist/
